@@ -20,3 +20,12 @@ To run the follow the following instructions:
     cd ../Prediction
     ./train_model.sh
     python mimic-accuracy.py
+
+
+## Libraries
+
+This project depends on:
+1- word2vec - https://code.google.com/p/word2vec/
+2- ICD9 - https://github.com/sirrice/icd9
+3- ICD9 - https://github.com/kshedden/icd9
+4- gensim - http://radimrehurek.com/gensim/
