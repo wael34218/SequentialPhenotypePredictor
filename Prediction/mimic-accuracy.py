@@ -12,7 +12,6 @@ with open('../Data/mimic_train') as f:
         events = line[:-1].split(' ')
         diags |= set([x for x in events if x.startswith('d_')])
 
-print(len(diags))
 with open('../Data/mimic_test') as f:
     lines = f.readlines()
     for line in lines:
