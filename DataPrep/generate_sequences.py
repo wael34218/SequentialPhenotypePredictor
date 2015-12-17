@@ -1,4 +1,5 @@
 import psycopg2
+import math
 import datetime
 import random
 
@@ -6,10 +7,6 @@ try:
         conn = psycopg2.connect("dbname='mimic' user='mimic' host='localhost' password='mimic'")
 except:
         print("I am unable to connect to the database")
-
-
-train = open('../Data/mimic_train', 'w')
-test = open('../Data/mimic_test', 'w')
 
 cur = conn.cursor()
 cur.execute("""set search_path to mimiciii""")
@@ -24,6 +21,7 @@ prev_hadm_id = None
 sequence = ""
 diags = {}
 p_seq = {}
+seq_count = 0
 
 for row in rows:
     if prev_time is None or prev_subject is None:
@@ -34,6 +32,7 @@ for row in rows:
 
     elif (row[0] != prev_subject) or (row[1] > prev_time + datetime.timedelta(365)):
         if len(diags) > 1:
+            seq_count += 1
             if row[0] in p_seq:
                 p_seq[row[0]].append(sequence)
             else:
@@ -42,7 +41,7 @@ for row in rows:
         diags = {}
 
     elif prev_hadm_id != row[5]:
-        sequence +=", "
+        sequence += ", "
 
     else:
         sequence += " "
@@ -57,14 +56,32 @@ for row in rows:
     else:
         sequence += row[2][:1] + "_" + row[3]
 
-for key in p_seq.keys():
-    index = 0
-    for seq in p_seq[key]:
-        if random.random() < .1 and index == len(p_seq[key]) - 1:
-            test.write(seq+'\n')
-        else:
-            train.write(seq.replace(",", "")+'\n')
 
-        index += 1
+train = {}
+test = {}
 
-train.close()
+for i in range(10):
+    train[i] = open('../Data/mimic_train_'+str(i), 'w')
+    test[i] = open('../Data/mimic_test_'+str(i), 'w')
+
+
+seq_index = 0
+segment = 0
+keys = list(p_seq.keys())
+random.shuffle(keys)
+
+for key in keys:
+    if math.floor(seq_index * 10 / seq_count) > segment:
+        print("New Segment "+str(segment))
+        segment += 1
+    for i, seq in enumerate(p_seq[key]):
+        test[segment].write(seq+'\n')
+        for f in range(10):
+            if f != segment:
+                train[f].write(seq.replace(",", "")+'\n')
+
+        seq_index += 1
+
+for i in range(10):
+    train[i].close()
+    test[i].close()
