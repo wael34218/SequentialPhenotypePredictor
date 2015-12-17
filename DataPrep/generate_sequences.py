@@ -33,10 +33,10 @@ for row in rows:
     elif (row[0] != prev_subject) or (row[1] > prev_time + datetime.timedelta(365)):
         if len(diags) > 1:
             seq_count += 1
-            if row[0] in p_seq:
-                p_seq[row[0]].append(sequence)
+            if prev_subject in p_seq:
+                p_seq[prev_subject].append(sequence)
             else:
-                p_seq[row[0]] = [sequence]
+                p_seq[prev_subject] = [sequence]
         sequence = ""
         diags = {}
 
