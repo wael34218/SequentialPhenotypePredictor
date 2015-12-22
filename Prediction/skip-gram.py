@@ -38,13 +38,13 @@ for d in diags:
 
 #for window in range(200, 1000, 200):
 #    for size in range(100, 1000, 100):
-window = 600
+window = 60
 size = 400
 hit = 0
 miss = 0
 print("Start: ", window, " ", size)
 stats = copy.deepcopy(zero_stats)
-for i in range(10):
+for i in range(1):
     print("Training segment "+str(i))
     with open('../Data/mimic_train_'+str(i)) as f:
         sentences = [s[:-1].split(' ') for s in f.readlines()]

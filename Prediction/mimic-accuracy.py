@@ -1,18 +1,17 @@
 import gensim
-import random
 
 model = gensim.models.Word2Vec.load_word2vec_format('mimic-vectors.bin', binary=True)
 miss = 0
 hit = 0
 
 diags = set()
-with open('../Data/mimic_train') as f:
+with open('../Data/mimic_train_0') as f:
     lines = f.readlines()
     for line in lines:
         events = line[:-1].split(' ')
         diags |= set([x for x in events if x.startswith('d_')])
 
-with open('../Data/mimic_test') as f:
+with open('../Data/mimic_test_0') as f:
     lines = f.readlines()
     for line in lines:
         feed_index = line[0:line.rfind(" d_")].rfind(",")
