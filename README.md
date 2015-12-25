@@ -18,8 +18,7 @@ To run the follow the following instructions:
     python generate_sequences.py
 
     cd ../Prediction
-    ./train_model.sh
-    python mimic-accuracy.py
+    python cbowsim.py --window 500 --size 500 --decay 4
 
 
 ## Libraries
