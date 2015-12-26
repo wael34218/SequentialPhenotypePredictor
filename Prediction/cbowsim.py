@@ -3,7 +3,7 @@ import sys
 lib_path = os.path.abspath(os.path.join('..', 'lib'))
 sys.path.append(lib_path)
 
-from icd9.icd9 import ICD9
+from icd9 import ICD9
 import gensim
 import math
 import csv

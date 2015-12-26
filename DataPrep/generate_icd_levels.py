@@ -1,13 +1,18 @@
+import os
+import sys
+lib_path = os.path.abspath(os.path.join('..', 'lib'))
+sys.path.append(lib_path)
+
 import psycopg2
-from icd92 import ICD92
-import icd9
+from icd9 import ICD9
+from icd9_converter import short_to_decimal
 
 try:
         conn = psycopg2.connect("dbname='mimic' user='mimic' host='localhost' password='mimic'")
 except:
         print("I am unable to connect to the database")
 
-tree = ICD92('codes.json')
+tree = ICD9('../lib/icd9/codes.json')
 cur = conn.cursor()
 
 cur.execute("""set search_path to mimiciii""")
@@ -18,7 +23,7 @@ index = 0
 for row in rows:
     if row[4][0:1] == "V":
         continue
-    newcode = icd9.short_to_decimal(row[4])
+    newcode = short_to_decimal(row[4])
     if newcode.find(".") == 2:
         newcode = "0"+newcode
     elif newcode.find(".") == 1:
