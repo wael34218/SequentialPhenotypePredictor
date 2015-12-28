@@ -120,8 +120,14 @@ class CbowSim:
     def accuracy(self):
         return (1.0 * self._hit / (self._miss + self._hit))
 
+    def report_accuracy(self):
+        with open('../Results/accuracies.csv', 'a') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['cbowsim', self._size, self._window,
+                             self._decay_coeff, self.accuracy()])
+
     def write_stats(self):
-        with open('../Results/stats_' + self.__class__.__name__ + '_'+str(self._window) +
+        with open('../Results/Stats/' + self.__class__.__name__ + '_'+str(self._window) +
                   '_'+str(self._size)+'_'+str(self._decay_coeff)+'.csv', 'w') as csvfile:
             header = ["Stat"]
             desc = ["Description"]
@@ -159,5 +165,5 @@ if __name__ == '__main__':
         test_files.append('../Data/mimic_test_'+str(i))
 
     model.cross_validate(train_files, test_files, args.window, args.size, args.decay)
-    print(model.accuracy())
+    model.report_accuracy()
     model.write_stats()
