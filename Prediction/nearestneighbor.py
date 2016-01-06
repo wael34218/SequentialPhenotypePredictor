@@ -5,18 +5,24 @@ sys.path.append(lib_path)
 
 from icd9 import ICD9
 import math
+import gensim
 import csv
 
 
 class NearestNeighbor:
 
-    def __init__(self, filename, decay=0, k=3):
+    def __init__(self, filename, decay=0, k=3, f=5, window=600, size=600):
         self._hit = self._miss = 0
         self._diags = set()
         self._uniq_events = set()
+
+        # Parameters
         self._filename = filename
         self._decay = decay
         self._k = k
+        self._f = f
+        self._window = window
+        self._size = size
 
         with open(filename) as f:
             lines = f.readlines()
@@ -57,6 +63,18 @@ class NearestNeighbor:
         self._prediction = []
         self._prediction_lists = []
         self._filename = filename
+        self._events_mask = {}
+
+        with open(filename) as f:
+            sentences = [s[:-1].replace(",", "").split(' ') for s in f.readlines()]
+            self._model = gensim.models.Word2Vec(sentences, sg=0, window=self._window,
+                                                 size=self._size, min_count=1, workers=20)
+
+        for diag in self._diags:
+            self._events_mask[diag] = [0] * len(self._uniq_events)
+            for e, d in self._model.most_similar(diag, topn=self._f):
+                self._events_mask[diag][self._events_index.index(e)] = 1
+
         with open(filename) as f:
             for line in f:
                 feed_index = line[0:line.rfind(" d_")].rfind(",")
@@ -77,15 +95,20 @@ class NearestNeighbor:
                 self._prediction_lists.append(actual)
 
     def predict(self, pred_seq):
-        dist = []
-        for seq in self._nn_mat:
-            dist.append(sum([(x-y)**2 for x, y in zip(seq, pred_seq)]))
-
-        min_values = sorted(dist)
         prediction = set()
-        # TODO: voting
-        for i in range(self._k):
-            prediction |= set(self._prediction_lists[dist.index(min_values[i])])
+        for diag in self._diags:
+            dist = []
+            for seq in self._nn_mat:
+                dist.append(sum([m*(x-y)**2 for x, y, m in
+                                 zip(seq, pred_seq, self._events_mask[diag])]))
+
+            min_values = sorted(dist)
+            count = 0
+            for i in range(self._k):
+                count += diag in self._prediction_lists[dist.index(min_values[i])]
+
+            if count > self._k / 2.0:
+                prediction.add(diag)
 
         return prediction
 
@@ -104,6 +127,9 @@ class NearestNeighbor:
                     seq_array[self._events_index.index(e)] += math.exp(self._decay*(i-te+1)/te)
 
                 prediction = self.predict(seq_array)
+                print(prediction)
+                print(actual)
+                print("==========")
 
                 for act in actual:
                     if act in prediction:
@@ -142,13 +168,18 @@ class NearestNeighbor:
             writer.writerow([self.__class__.__name__, self.accuracy])
 
     def write_stats(self):
-        with open('../Results/Stats/' + self.__class__.__name__ + '_'+str(self._k) +
-                  '_'+str(self._decay)+'.csv', 'w') as csvfile:
+        with open('../Results/Stats/' + self.__class__.__name__ + '_k' + str(self._k) +
+                  '_f' + str(self._f) + '_w'+str(self._window) + '_s' + str(self._size) +
+                  '_d' + str(self._decay)+'.csv', 'w') as csvfile:
             header = ["Stat"]
             desc = ["Description"]
             spec = ["Specificity"]
             sens = ["Sensitivity"]
             acc = ["Accuracy"]
+            tp = ["True Positives"]
+            tn = ["True Negatives"]
+            fp = ["False Positives"]
+            fn = ["False Negatives"]
             for d in self._diags:
                 spec.append(self._stats[d]["TP"]*1.0 /
                             (self._stats[d]["TP"] + self._stats[d]["FN"]))
@@ -158,6 +189,10 @@ class NearestNeighbor:
                 desc.append(self._diag_to_desc[d])
                 acc.append((self._stats[d]["TN"]*1.0 + self._stats[d]["TP"]) /
                            sum(self._stats[d].values())*1.0)
+                tp.append(self._stats[d]["TP"])
+                tn.append(self._stats[d]["TN"])
+                fp.append(self._stats[d]["FP"])
+                fn.append(self._stats[d]["FN"])
 
             writer = csv.writer(csvfile)
             writer.writerow(header)
@@ -165,10 +200,14 @@ class NearestNeighbor:
             writer.writerow(spec)
             writer.writerow(sens)
             writer.writerow(acc)
+            writer.writerow(tp)
+            writer.writerow(tn)
+            writer.writerow(fp)
+            writer.writerow(fn)
 
 
 if __name__ == '__main__':
-    model = NearestNeighbor('../Data/mimic_train_cs_0', decay=0, k=1)
+    model = NearestNeighbor('../Data/mimic_train_cs_0', decay=5, k=5, f=8, window=600, size=600)
     train_files = []
     test_files = []
     for i in range(1):
