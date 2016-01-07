@@ -61,8 +61,8 @@ train = {}
 test = {}
 
 for i in range(10):
-    train[i] = open('../Data/mimic_train_'+str(i), 'w')
-    test[i] = open('../Data/mimic_test_'+str(i), 'w')
+    train[i] = open('../Data/mimic_train_cs_'+str(i), 'w')
+    test[i] = open('../Data/mimic_test_cs_'+str(i), 'w')
 
 
 seq_index = 0
@@ -78,7 +78,7 @@ for key in keys:
         test[segment].write(seq+'\n')
         for f in range(10):
             if f != segment:
-                train[f].write(seq.replace(",", "")+'\n')
+                train[f].write(seq+'\n')
 
         seq_index += 1
 
