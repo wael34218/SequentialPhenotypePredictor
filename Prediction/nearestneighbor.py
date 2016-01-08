@@ -14,7 +14,7 @@ class NearestNeighbor(Predictor):
         self._window = window
         self._size = size
         self._props = {"k": k, "f": f, "window": window, "size": size, "decay": decay}
-        super().__init__(filename)
+        super(NearestNeighbor, self).__init__(filename)
 
     def train(self, filename):
         self._nn_mat = []
@@ -88,8 +88,6 @@ class NearestNeighbor(Predictor):
                 print(actual)
                 print("==========")
                 self.stat_prediction(prediction, actual)
-
-        self.calculate_true_negatives()
 
 
 if __name__ == '__main__':

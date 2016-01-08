@@ -11,7 +11,7 @@ class CbowSim(Predictor):
         self._size = size
         self._decay = decay
         self._props = {"window": window, "size": size, "decay": decay}
-        super().__init__(filename)
+        super(CbowSim, self).__init__(filename)
 
     def train(self, filename):
         self._sim_mat = {}
@@ -50,8 +50,6 @@ class CbowSim(Predictor):
                 prediction = set([result[x] for x in distances])
                 # prediction |= set([x for x in feed_events if x.startswith('d_')])
                 self.stat_prediction(prediction, actual)
-
-        self.calculate_true_negatives()
 
 
 if __name__ == '__main__':

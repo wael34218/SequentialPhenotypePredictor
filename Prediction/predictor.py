@@ -8,7 +8,7 @@ import csv
 import json
 
 
-class Predictor:
+class Predictor(object):
 
     def __init__(self, filename):
         self._hit = self._miss = 0
@@ -67,7 +67,7 @@ class Predictor:
         else:
             self._miss += 1
 
-    def calculate_true_negatives(self):
+    def _calculate_true_negatives(self):
         for d in self._diags:
             self._stats[d]["TN"] = self._total_test - self._stats[d]["TP"] - \
                 self._stats[d]["FN"] - self._stats[d]["FP"]
@@ -91,11 +91,12 @@ class Predictor:
         return fname
 
     def report_accuracy(self):
+        self._calculate_true_negatives()
         with open('../Results/accuracies.csv', 'a') as csvfile:
             writer = csv.writer(csvfile)
             props = {k: self._props[k] for k in self._props}
             props["model"] = self.__class__.__name__
-            writer.writerow([self.accuracy, json.dumps(self._props, sort_keys=True)])
+            writer.writerow([self.accuracy, json.dumps(props, sort_keys=True)])
 
     def write_stats(self):
         with open('../Results/Stats/' + self.csv_name, 'w') as csvfile:

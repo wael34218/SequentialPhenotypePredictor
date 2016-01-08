@@ -11,7 +11,7 @@ class CbowSliding(Predictor):
         self._size = size
         self._decay = decay
         self._props = {"window": window, "size": size, "decay": decay}
-        super().__init__(filename)
+        super(CbowSliding, self).__init__(filename)
 
     def train(self, filename):
         self._sim_mat = {}
@@ -63,8 +63,6 @@ class CbowSliding(Predictor):
                     feed_events.pop(0)
 
                 self.stat_prediction(prediction, actual)
-
-        self.calculate_true_negatives()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='CBOW Similarity')

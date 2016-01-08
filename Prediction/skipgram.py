@@ -8,7 +8,7 @@ class SkipGram(Predictor):
         self._window = window
         self._size = size
         self._props = {"window": window, "size": size}
-        super().__init__(filename)
+        super(SkipGram, self).__init__(filename)
 
     def train(self, filename):
         with open(filename) as f:
@@ -31,8 +31,6 @@ class SkipGram(Predictor):
                 prediction |= set([x for x in feed_events if x.startswith('d_')])
 
                 self.stat_prediction(prediction, actual)
-
-        self.calculate_true_negatives()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SkipGram Similarity')

@@ -8,14 +8,19 @@ def plot(x, filters):
     x_values = {}
     y_values = {}
 
-    with open('../Results/accuracies.csv') as f:
+    with open('../Results/accuracies.csv', 'rU') as f:
         reader = csv.reader(f)
         for line in reader:
             props = json.loads(line[1])
+
+            filtered_out = False
             for f in filters:
                 if f in props:
-                    if filters[f] != props[f]:
-                        continue
+                    if str(filters[f]) != str(props[f]):
+                        filtered_out = True
+
+            if filtered_out:
+                continue
 
             label = "-".join(k[0]+":"+str(props[k]) for k in props
                              if k not in filters.keys() and k != x)
@@ -36,13 +41,16 @@ def plot(x, filters):
     plt.xlabel(x, fontsize=14, color='black')
     plt.ylabel('Accuracy', fontsize=14, color='black')
     plt.legend(framealpha=0.5)
-    plt.savefig('../Results/Plots/'+str(filters)+'_'+x+'.png')
+    filter_str = "(" + "-".join([k+"="+filters[k] for k in filters]) + ")"
+    plt.savefig('../Results/Plots/'+filter_str+'_'+x+'.png')
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Plot')
     parser.add_argument('-x', '--xaxis', action="store", type=str, required=True)
-    parser.add_argument('-f', '--filters', nargs='+', action="store", type=str, required=True)
+    parser.add_argument('-f', '--filters', nargs='+', action="store", type=str)
     args = parser.parse_args()
-    filters = {filt.split(":")[0]: filt.split(":")[1] for filt in args.filters}
+    filters = {}
+    if args.filters is not None:
+        filters = {filt.split(":")[0]: filt.split(":")[1] for filt in args.filters}
     plot(args.xaxis, filters)
