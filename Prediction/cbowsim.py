@@ -56,11 +56,11 @@ class CbowSim(Predictor):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='CBOW Similarity')
-    parser.add_argument('--window', action="store", default=10, type=int,
+    parser.add_argument('-w', '--window', action="store", default=10, type=int,
                         help='Set max skip length between words (default: 10)')
-    parser.add_argument('--size', action="store", default=600, type=int,
+    parser.add_argument('-s', '--size', action="store", default=600, type=int,
                         help='Set size of word vectors (default: 600)')
-    parser.add_argument('--decay', action="store", default=5, type=float,
+    parser.add_argument('-d', '--decay', action="store", default=5, type=float,
                         help='Set exponential decay through time (default: 5)')
     args = parser.parse_args()
 

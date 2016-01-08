@@ -5,6 +5,7 @@ sys.path.append(lib_path)
 
 from icd9 import ICD9
 import csv
+import json
 
 
 class Predictor:
@@ -89,17 +90,12 @@ class Predictor:
         fname += ".csv"
         return fname
 
-    @property
-    def row_values(self):
-        rows = [self.__class__.__name__, self.accuracy]
-        for k in self._props:
-            rows.append(self._props[k])
-        return rows
-
     def report_accuracy(self):
         with open('../Results/accuracies.csv', 'a') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(self.row_values)
+            props = {k: self._props[k] for k in self._props}
+            props["model"] = self.__class__.__name__
+            writer.writerow([self.accuracy, json.dumps(self._props, sort_keys=True)])
 
     def write_stats(self):
         with open('../Results/Stats/' + self.csv_name, 'w') as csvfile:

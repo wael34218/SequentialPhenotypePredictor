@@ -1,4 +1,5 @@
 import math
+import argparse
 import gensim
 from predictor import Predictor
 
@@ -92,7 +93,21 @@ class NearestNeighbor(Predictor):
 
 
 if __name__ == '__main__':
-    model = NearestNeighbor('../Data/mimic_train_cs_0', decay=5, k=5, f=8, window=600, size=600)
+    parser = argparse.ArgumentParser(description='CBOW Similarity')
+    parser.add_argument('-w', '--window', action="store", default=10, type=int,
+                        help='Set max skip length between words (default: 10)')
+    parser.add_argument('-s', '--size', action="store", default=600, type=int,
+                        help='Set size of word vectors (default: 600)')
+    parser.add_argument('-d', '--decay', action="store", default=5, type=float,
+                        help='Set exponential decay through time (default: 5)')
+    parser.add_argument('-f', '--features', action="store", default=5, type=int,
+                        help='Set number of significant features (default: 5)')
+    parser.add_argument('-k', '--k', action="store", default=5, type=int,
+                        help='Set number of nearest neighbors (default: 3)')
+    args = parser.parse_args()
+
+    model = NearestNeighbor('../Data/mimic_train_cs_0', decay=args.decay, k=args.k,
+                            f=args.features, window=args.window, size=args.size)
     train_files = []
     test_files = []
     for i in range(1):

@@ -36,9 +36,9 @@ class SkipGram(Predictor):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SkipGram Similarity')
-    parser.add_argument('--window', action="store", default=10, type=int,
+    parser.add_argument('-w', '--window', action="store", default=10, type=int,
                         help='Set max skip length between words (default: 10)')
-    parser.add_argument('--size', action="store", default=600, type=int,
+    parser.add_argument('-s', '--size', action="store", default=600, type=int,
                         help='Set size of word vectors (default: 600)')
     args = parser.parse_args()
 
@@ -53,3 +53,4 @@ if __name__ == '__main__':
     model.cross_validate(train_files, test_files)
     model.report_accuracy()
     model.write_stats()
+    print(model.accuracy)
