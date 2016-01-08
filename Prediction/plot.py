@@ -34,7 +34,8 @@ def plot(x, filters):
     labels = x_values.keys()
 
     for label in sorted(labels):
-        plt.plot(x_values[label], y_values[label],
+        y = [vy for (vx, vy) in sorted(zip(x_values[label], y_values[label]))]
+        plt.plot(sorted(x_values[label]), y,
                  color=("#%06x" % random.randint(0, 0xFFFFFF)), label=label)
 
     plt.title("Accuracy vs "+x)
