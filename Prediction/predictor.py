@@ -103,36 +103,20 @@ class Predictor:
 
     def write_stats(self):
         with open('../Results/Stats/' + self.csv_name, 'w') as csvfile:
-            header = ["Stat"]
-            desc = ["Description"]
-            spec = ["Specificity"]
-            sens = ["Sensitivity"]
-            acc = ["Accuracy"]
-            tp = ["True Positives"]
-            tn = ["True Negatives"]
-            fp = ["False Positives"]
-            fn = ["False Negatives"]
-            for d in self._diags:
-                spec.append(self._stats[d]["TP"]*1.0 /
-                            (self._stats[d]["TP"] + self._stats[d]["FN"]))
-                sens.append(self._stats[d]["TN"]*1.0 /
-                            (self._stats[d]["FP"] + self._stats[d]["TN"]))
-                header.append(d)
-                desc.append(self._diag_to_desc[d])
-                acc.append((self._stats[d]["TN"]*1.0 + self._stats[d]["TP"]) /
-                           sum(self._stats[d].values())*1.0)
-                tp.append(self._stats[d]["TP"])
-                tn.append(self._stats[d]["TN"])
-                fp.append(self._stats[d]["FP"])
-                fn.append(self._stats[d]["FN"])
-
             writer = csv.writer(csvfile)
+            header = ["Diagnosis", "Description", "Specificity", "Sensitivity", "Accuracy",
+                      "True Positives", "True Negatives", "False Positives", "False Negatives"]
             writer.writerow(header)
-            writer.writerow(desc)
-            writer.writerow(spec)
-            writer.writerow(sens)
-            writer.writerow(acc)
-            writer.writerow(tp)
-            writer.writerow(tn)
-            writer.writerow(fp)
-            writer.writerow(fn)
+            for d in self._diags:
+                row = []
+                row.append(d)
+                row.append(self._diag_to_desc[d])
+                row.append(self._stats[d]["TP"]*1.0 / (self._stats[d]["TP"] + self._stats[d]["FN"]))
+                row.append(self._stats[d]["TN"]*1.0 / (self._stats[d]["FP"] + self._stats[d]["TN"]))
+                row.append((self._stats[d]["TN"]*1.0 + self._stats[d]["TP"]) /
+                           sum(self._stats[d].values())*1.0)
+                row.append(self._stats[d]["TP"])
+                row.append(self._stats[d]["TN"])
+                row.append(self._stats[d]["FP"])
+                row.append(self._stats[d]["FN"])
+                writer.writerow(row)
