@@ -104,7 +104,7 @@ class Predictor(object):
             header = ["Diagnosis", "Description", "Specificity", "Sensitivity", "Accuracy",
                       "True Positives", "True Negatives", "False Positives", "False Negatives"]
             writer.writerow(header)
-            for d in self._diags:
+            for d in sorted(self._diags):
                 row = []
                 row.append(d)
                 row.append(self._diag_to_desc[d])
