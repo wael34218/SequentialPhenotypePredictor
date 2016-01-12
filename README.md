@@ -20,7 +20,7 @@ To take the code for a spin run the following commands:
     cd ../Prediction
     python cbowsim.py --window 500 --size 500 --decay 4
 
-For plotting results you could use the plot.py. For example:
+For plotting results you could use plot.py. For example:
 
     python plot.py -x decay --filters size:300 model:CbowSim
 
