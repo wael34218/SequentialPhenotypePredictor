@@ -6,19 +6,37 @@ from predictor import Predictor
 
 class CbowSim(Predictor):
 
-    def __init__(self, filename, window=600, size=600, decay=5):
+    def __init__(self, filename, window=600, size=600, decay=5, stopwords=5):
         self._window = window
         self._size = size
         self._decay = decay
-        self._props = {"window": window, "size": size, "decay": decay}
+        self._stopwords = stopwords
+        self._props = {"window": window, "size": size, "decay": decay, "stopwords": stopwords}
         super(CbowSim, self).__init__(filename)
 
     def train(self, filename):
         self._sim_mat = {}
         self._filename = filename
+
+        from collections import defaultdict
+        self._word_counter = defaultdict(lambda: 0)
+
         with open(filename) as f:
-            sentences = [s[:-1].split(' ') for s in f.readlines()]
-            self._model = gensim.models.Word2Vec(sentences, sg=0, window=self._window,
+            sentences = [s[:-1].replace(",", "").split(' ') for s in f.readlines()]
+            for sentence in sentences:
+                for word in sentence:
+                    self._word_counter[word] += 1
+
+            inverse = {v: k for k, v in self._word_counter.items()}
+            topwords = sorted(inverse.keys(), reverse=True)[:self._stopwords]
+            self._stopwordslist = [inverse[k] for k in topwords]
+            print(self._stopwordslist)
+
+            newsentences = []
+            for s in sentences:
+                newsentences.append([w for w in s if w not in self._stopwordslist])
+
+            self._model = gensim.models.Word2Vec(newsentences, sg=0, window=self._window,
                                                  size=self._size, min_count=1, workers=20)
 
         for diag in self._diags:
@@ -37,6 +55,8 @@ class CbowSim(Predictor):
                 last_admission = line[feed_index:].replace("\n", "").replace(",", "").split(" ")
                 actual = set([x for x in last_admission if x.startswith('d_')])
                 test_array = [0] * len(self._uniq_events)
+
+                feed_events = [w for w in feed_events if w not in self._stopwordslist]
 
                 te = len(feed_events)
                 for i, e in enumerate(feed_events):
@@ -60,15 +80,17 @@ if __name__ == '__main__':
                         help='Set size of word vectors (default: 600)')
     parser.add_argument('-d', '--decay', action="store", default=5, type=float,
                         help='Set exponential decay through time (default: 5)')
+    parser.add_argument('-sw', '--stopwords', action="store", default=5, type=int,
+                        help='Set number of stop words (default: 5)')
     args = parser.parse_args()
 
     train_files = []
     test_files = []
-    model = CbowSim('../Data/mimic_train_0', args.window, args.size, args.decay)
+    model = CbowSim('../Data/mimic_train_me_0', args.window, args.size, args.decay, args.stopwords)
 
     for i in range(10):
-        train_files.append('../Data/mimic_train_'+str(i))
-        test_files.append('../Data/mimic_test_'+str(i))
+        train_files.append('../Data/mimic_train_me_'+str(i))
+        test_files.append('../Data/mimic_test_me_'+str(i))
 
     model.cross_validate(train_files, test_files)
     model.report_accuracy()

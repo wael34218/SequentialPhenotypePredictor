@@ -61,8 +61,8 @@ train = {}
 test = {}
 
 for i in range(10):
-    train[i] = open('../Data/mimic_train_cs_'+str(i), 'w')
-    test[i] = open('../Data/mimic_test_cs_'+str(i), 'w')
+    train[i] = open('../Data/mimic_train_me_'+str(i), 'w')
+    test[i] = open('../Data/mimic_test_me_'+str(i), 'w')
 
 
 seq_index = 0

@@ -10,7 +10,7 @@ https://mimic.physionet.org/tutorials/install_mimic_locally/
 You should also install gensim python library: https://radimrehurek.com/gensim/install.html
 
 
-To run the follow the following instructions:
+To take the code for a spin run the following commands:
 
     cd DataPrep
     psql -U mimic -a -f allevents.sql

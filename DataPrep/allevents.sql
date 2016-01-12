@@ -1,6 +1,8 @@
 set search_path to mimiciii;
 
-/* Create allevents table */ create table allevents (hadm_id integer, subject_id integer, charttime timestamp, event_type varchar, event varchar);
+/* Create allevents table */ 
+drop table if exists allevents;
+create table allevents (hadm_id integer, subject_id integer, charttime timestamp, event_type varchar, event varchar);
 
 /* Adding most common abnormal 58 Labevents */
 insert into allevents
@@ -11,7 +13,7 @@ where flag='abnormal' and itemid in
   (
     select hadm_id, itemid from labevents where flag='abnormal' group by hadm_id, itemid
   ) as uniqlab
-  group by itemid having count(*) > 6000
+  group by itemid having count(*) > 5000
 )
 and subject_id in (select subject_id from admissions group by subject_id having count(*) > 1)
 group by itemid, hadm_id, subject_id
@@ -26,7 +28,7 @@ where formulary_drug_cd in
   (
     select hadm_id, formulary_drug_cd from prescriptions group by hadm_id, formulary_drug_cd
   ) as uniqlab
-  group by formulary_drug_cd having count(*) > 8000
+  group by formulary_drug_cd having count(*) > 5000
 )
 and subject_id in (select subject_id from admissions group by subject_id having count(*) > 1)
 ;

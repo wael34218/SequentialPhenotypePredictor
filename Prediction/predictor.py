@@ -85,9 +85,9 @@ class Predictor(object):
     @property
     def csv_name(self):
         fname = self.__class__.__name__
-        for k in self._props:
+        for k in sorted(self._props):
             fname += "_" + k[:1] + str(self._props[k])
-        fname += ".csv"
+        fname += "_2.csv"
         return fname
 
     def report_accuracy(self):
