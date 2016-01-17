@@ -60,3 +60,4 @@
 0.5938189845474614,"{""decay"": 0, ""model"": ""NaiveBayes"", ""ngrams"": 10}"
 0.6592427616926503,"{""decay"": 0, ""model"": ""NaiveBayes"", ""ngrams"": 20}"
 0.6751740139211136,"{""decay"": 0, ""model"": ""NaiveBayes"", ""ngrams"": 30}"
+0.4740773286467487,"{""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 0, ""window"": 10}",5.0

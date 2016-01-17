@@ -30,7 +30,6 @@ class CbowSim(Predictor):
             inverse = {v: k for k, v in self._word_counter.items()}
             topwords = sorted(inverse.keys(), reverse=True)[:self._stopwords]
             self._stopwordslist = [inverse[k] for k in topwords]
-            print(self._stopwordslist)
 
             newsentences = []
             for s in sentences:
