@@ -23,6 +23,7 @@ class Predictor(object):
                 self._uniq_events |= set(events)
                 self._diags |= set([x for x in events if x.startswith('d_')])
 
+        self._nevents = len(self._uniq_events)
         self._events_index = sorted(self._uniq_events)
         self._reset_stats()
         self._generate_icd9_lookup()
@@ -31,6 +32,7 @@ class Predictor(object):
     def _reset_stats(self):
         self._stats = {}
         self._total_test = 0
+        self._total_predictions = 0
         for diag in self._diags:
             self._stats[diag] = {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
 
@@ -52,6 +54,7 @@ class Predictor(object):
                     self._diag_to_desc[d] = "Not Found"
 
     def stat_prediction(self, prediction, actual):
+        self._total_predictions += len(prediction)
         for act in actual:
             if act in prediction:
                 self._stats[act]["TP"] += 1
@@ -79,6 +82,10 @@ class Predictor(object):
             self.test(test_files[i])
 
     @property
+    def prediction_per_patient(self):
+        return (1.0 * self._total_predictions / (self._miss + self._hit))
+
+    @property
     def accuracy(self):
         return (1.0 * self._hit / (self._miss + self._hit))
 
@@ -87,7 +94,7 @@ class Predictor(object):
         fname = self.__class__.__name__
         for k in sorted(self._props):
             fname += "_" + k[:1] + str(self._props[k])
-        fname += "_2.csv"
+        fname += ".csv"
         return fname
 
     def report_accuracy(self):
@@ -99,6 +106,7 @@ class Predictor(object):
             writer.writerow([self.accuracy, json.dumps(props, sort_keys=True)])
 
     def write_stats(self):
+        self._calculate_true_negatives()
         with open('../Results/Stats/' + self.csv_name, 'w') as csvfile:
             writer = csv.writer(csvfile)
             header = ["Diagnosis", "Description", "Specificity", "Sensitivity", "Accuracy",
@@ -108,8 +116,19 @@ class Predictor(object):
                 row = []
                 row.append(d)
                 row.append(self._diag_to_desc[d])
-                row.append(self._stats[d]["TP"]*1.0 / (self._stats[d]["TP"] + self._stats[d]["FN"]))
-                row.append(self._stats[d]["TN"]*1.0 / (self._stats[d]["FP"] + self._stats[d]["TN"]))
+
+                if self._stats[d]["TP"] + self._stats[d]["FN"] == 0:
+                    row.append(self._stats[d]["TP"] / 1.0)
+                else:
+                    row.append(self._stats[d]["TP"]*1.0 /
+                               (self._stats[d]["TP"] + self._stats[d]["FN"]))
+
+                if self._stats[d]["FP"] + self._stats[d]["TN"] == 0:
+                    row.append(self._stats[d]["TN"] / 1.0)
+                else:
+                    row.append(self._stats[d]["TN"]*1.0 /
+                               (self._stats[d]["FP"] + self._stats[d]["TN"]))
+
                 row.append((self._stats[d]["TN"]*1.0 + self._stats[d]["TP"]) /
                            sum(self._stats[d].values())*1.0)
                 row.append(self._stats[d]["TP"])
