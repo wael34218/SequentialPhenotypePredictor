@@ -103,7 +103,8 @@ class Predictor(object):
             writer = csv.writer(csvfile)
             props = {k: self._props[k] for k in self._props}
             props["model"] = self.__class__.__name__
-            writer.writerow([self.accuracy, json.dumps(props, sort_keys=True)])
+            writer.writerow([self.accuracy, json.dumps(props, sort_keys=True),
+                             self.prediction_per_patient])
 
     def write_stats(self):
         self._calculate_true_negatives()
