@@ -101,7 +101,7 @@ if __name__ == '__main__':
     test_files = []
     model = NaiveBayes('../Data/mimic_train_0', args.ngrams, args.decay)
 
-    for i in range(1):
+    for i in range(10):
         train_files.append('../Data/mimic_train_'+str(i))
         test_files.append('../Data/mimic_test_'+str(i))
 

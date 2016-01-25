@@ -37,7 +37,7 @@ and subject_id in (select subject_id from admissions group by subject_id having 
 insert into allevents
 select admissions.hadm_id, admissions.subject_id, dischtime as charttime, 'diagnosis' as event_type, icd9_code as event from diagnoses_icd
 left join admissions on admissions.hadm_id = diagnoses_icd.hadm_id
-where sequence < 6 and icd9_code in
+where icd9_code in
 (
   select icd9_code from
   (

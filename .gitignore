@@ -1,3 +1,6 @@
 *.swp
 .DS_Store
 *.pyc
+*.model
+__pycache__/
+*.buffer
