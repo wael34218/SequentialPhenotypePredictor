@@ -93,13 +93,13 @@ if __name__ == '__main__':
                         help='Set number of stop words (default: 5)')
 
     args = parser.parse_args()
-    model = CollaborativeFiltering('../Data/mimic_train_me_0',
+    model = CollaborativeFiltering('../Data/w2v/mimic_train_me_0',
                                    args.window, args.size, args.stopwords)
     train_files = []
     test_files = []
     for i in range(1):
-        train_files.append('../Data/mimic_train_me_'+str(i))
-        test_files.append('../Data/mimic_test_me_'+str(i))
+        train_files.append('../Data/w2v/mimic_train_me_'+str(i))
+        test_files.append('../Data/w2v/mimic_test_me_'+str(i))
 
     model.cross_validate(train_files, test_files)
     model.report_accuracy()

@@ -4,6 +4,7 @@ lib_path = os.path.abspath(os.path.join('..', 'lib'))
 sys.path.append(lib_path)
 
 from icd9 import ICD9
+from sklearn import metrics
 import csv
 import json
 
@@ -28,13 +29,19 @@ class Predictor(object):
         self._reset_stats()
         self._generate_icd9_lookup()
         self._diags = list(self._diags)
+        self._auc_enabled = False
 
     def _reset_stats(self):
         self._stats = {}
+        self._auc = {}
+        self._true_vals = {}
+        self._pred_vals = {}
         self._total_test = 0
         self._total_predictions = 0
         for diag in self._diags:
             self._stats[diag] = {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
+            self._true_vals[diag] = []
+            self._pred_vals[diag] = []
 
     def _generate_icd9_lookup(self):
         self._diag_to_desc = {}
@@ -97,8 +104,9 @@ class Predictor(object):
         fname += ".csv"
         return fname
 
-    def report_accuracy(self):
-        self._calculate_true_negatives()
+    def report_accuracy(self, calculate_true_negatives=True):
+        if calculate_true_negatives:
+            self._calculate_true_negatives()
         with open('../Results/accuracies.csv', 'a') as csvfile:
             writer = csv.writer(csvfile)
             props = {k: self._props[k] for k in self._props}
@@ -106,17 +114,24 @@ class Predictor(object):
             writer.writerow([self.accuracy, json.dumps(props, sort_keys=True),
                              self.prediction_per_patient])
 
-    def write_stats(self):
-        self._calculate_true_negatives()
+    def write_stats(self, calculate_true_negatives=True):
+        if calculate_true_negatives:
+            self._calculate_true_negatives()
         with open('../Results/Stats/' + self.csv_name, 'w') as csvfile:
             writer = csv.writer(csvfile)
-            header = ["Diagnosis", "Description", "Specificity", "Sensitivity", "Accuracy",
+            header = ["Diagnosis", "Description", "AUC", "Specificity", "Sensitivity", "Accuracy",
                       "True Positives", "True Negatives", "False Positives", "False Negatives"]
             writer.writerow(header)
             for d in sorted(self._diags):
+                # print(d, self._stats[d])
                 row = []
                 row.append(d)
                 row.append(self._diag_to_desc[d])
+
+                if self._auc_enabled:
+                    row.append(metrics.roc_auc_score(self._true_vals[d], self._pred_vals[d]))
+                else:
+                    row.append("NA")
 
                 if self._stats[d]["TP"] + self._stats[d]["FN"] == 0:
                     row.append(self._stats[d]["TP"] / 1.0)

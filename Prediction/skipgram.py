@@ -42,11 +42,11 @@ if __name__ == '__main__':
 
     train_files = []
     test_files = []
-    model = SkipGram('../Data/mimic_train_0', args.window, args.size)
+    model = SkipGram('../Data/w2v/mimic_train_0', args.window, args.size)
 
     for i in range(10):
-        train_files.append('../Data/mimic_train_'+str(i))
-        test_files.append('../Data/mimic_test_'+str(i))
+        train_files.append('../Data/w2v/mimic_train_'+str(i))
+        test_files.append('../Data/w2v/mimic_test_'+str(i))
 
     model.cross_validate(train_files, test_files)
     model.report_accuracy()

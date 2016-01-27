@@ -81,7 +81,7 @@ w2v_size = 200
 w2v_window = 60
 
 # TODO: allow passed in parameters and redo model for each train set
-with open('../Data/mimic_train_me_0') as f:
+with open('../Data/w2v/mimic_train_me_0') as f:
     sentences = [s[:-1].replace(",", "").split(' ') for s in f.readlines()]
     w2v = gensim.models.Word2Vec(sentences, sg=0, window=w2v_window, size=w2v_size,
                                  min_count=1, workers=20)
@@ -113,6 +113,7 @@ for row in rows:
         if len(diags) > 0 and len(timed_events) > 4:
             p_features = set_p_features(row[5])
             g_features = set_g_features(timed_events)
+            e_features = [e / len(timed_events) for e in e_features]
             all_seq.append([g_features, p_features, e_features, diags])
         diags = set()
         e_features = [0] * w2v_size
@@ -148,8 +149,8 @@ test = {}
 diags = selected_diags
 for diag in diags:
     for i in range(10):
-        train[diag+str(i)] = open('../Data/svd/mimic_train_'+diag+'_'+str(i), 'w')
-        test[diag+str(i)] = open('../Data/svd/mimic_test_'+diag+'_'+str(i), 'w')
+        train[diag+str(i)] = open('../Data/svd_no_globals/mimic_train_'+diag+'_'+str(i), 'w')
+        test[diag+str(i)] = open('../Data/svd_no_globals/mimic_test_'+diag+'_'+str(i), 'w')
 
 
 segment = 0
