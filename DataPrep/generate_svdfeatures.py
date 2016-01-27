@@ -149,8 +149,8 @@ test = {}
 diags = selected_diags
 for diag in diags:
     for i in range(10):
-        train[diag+str(i)] = open('../Data/svd_no_globals/mimic_train_'+diag+'_'+str(i), 'w')
-        test[diag+str(i)] = open('../Data/svd_no_globals/mimic_test_'+diag+'_'+str(i), 'w')
+        train[diag+str(i)] = open('../Data/svd/mimic_train_'+diag+'_'+str(i), 'w')
+        test[diag+str(i)] = open('../Data/svd/mimic_test_'+diag+'_'+str(i), 'w')
 
 
 segment = 0
