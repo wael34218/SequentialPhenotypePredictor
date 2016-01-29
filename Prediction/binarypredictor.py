@@ -9,18 +9,21 @@ import csv
 import json
 
 
-class Predictor(object):
+class BinaryPredictor(object):
 
     def __init__(self, filename):
         self._hit = self._miss = 0
         self._uniq_events = set()
         self._diags = set()
         self._filename = filename
+        self._selected_diags = ["d_584", "d_518", "d_428", "d_427", "d_276", "d_486", "d_038",
+                                "d_599", "d_403", "d_507", "d_401", "d_785.5", "d_414", "d_285.1",
+                                "d_496", "d_511", "d_424", "d_272", "d_410"]
 
         with open(filename) as f:
             lines = f.readlines()
             for line in lines:
-                events = line[:-1].replace(",", "").split(' ')
+                events = line.split("|")[2].split(" ") + line.split("|")[3].split(" ")
                 self._uniq_events |= set(events)
                 self._diags |= set([x for x in events if x.startswith('d_')])
 
@@ -29,7 +32,6 @@ class Predictor(object):
         self._reset_stats()
         self._generate_icd9_lookup()
         self._diags = list(self._diags)
-        self._auc_enabled = False
 
     def _reset_stats(self):
         self._stats = {}
@@ -37,7 +39,7 @@ class Predictor(object):
         self._pred_vals = {}
         self._total_test = 0
         self._total_predictions = 0
-        for diag in self._diags:
+        for diag in self._selected_diags:
             self._stats[diag] = {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
             self._true_vals[diag] = []
             self._pred_vals[diag] = []
@@ -59,33 +61,36 @@ class Predictor(object):
                 else:
                     self._diag_to_desc[d] = "Not Found"
 
-    def stat_prediction(self, prediction, actual):
-        self._total_predictions += len(prediction)
-        for act in actual:
-            if act in prediction:
-                self._stats[act]["TP"] += 1
-            else:
-                self._stats[act]["FN"] += 1
+    def stat_prediction(self, prediction, actual, diag):
+        prob = (prediction > 0.8)
+        true_condition = (actual == 1)
 
-        for pred in prediction - actual:
-            self._stats[pred]["FP"] += 1
+        if prob:
+            self._total_predictions += 1
 
-        self._total_test += 1
-        if len([x for x in actual if x in prediction]) > 0:
+        self._true_vals[diag].append(actual)
+        self._pred_vals[diag].append(prediction)
+
+        if prob is True and true_condition is True:
+            self._stats[diag]["TP"] += 1
             self._hit += 1
-        else:
+        elif prob is False and true_condition is True:
             self._miss += 1
+            self._stats[diag]["FN"] += 1
+        elif prob is True and true_condition is False:
+            self._miss += 1
+            self._stats[diag]["FP"] += 1
+        elif prob is False and true_condition is False:
+            self._hit += 1
+            self._stats[diag]["TN"] += 1
+        else:
+            assert False, "This shouldnt happen"
 
-    def _calculate_true_negatives(self):
-        for d in self._diags:
-            self._stats[d]["TN"] = self._total_test - self._stats[d]["TP"] - \
-                self._stats[d]["FN"] - self._stats[d]["FP"]
-
-    def cross_validate(self, train_files, test_files):
+    def cross_validate(self, train_files, test_files, diags, validation_set):
         self._reset_stats()
         for i, train in enumerate(train_files):
-            self.train(train_files[i])
-            self.test(test_files[i])
+            self.train(train_files[i], diags[i], validation_set[i])
+            self.test(test_files[i], diags[i], validation_set[i])
 
     @property
     def prediction_per_patient(self):
@@ -103,9 +108,7 @@ class Predictor(object):
         fname += ".csv"
         return fname
 
-    def report_accuracy(self, calculate_true_negatives=True):
-        if calculate_true_negatives:
-            self._calculate_true_negatives()
+    def report_accuracy(self):
         with open('../Results/accuracies.csv', 'a') as csvfile:
             writer = csv.writer(csvfile)
             props = {k: self._props[k] for k in self._props}
@@ -113,16 +116,14 @@ class Predictor(object):
             writer.writerow([self.accuracy, json.dumps(props, sort_keys=True),
                              self.prediction_per_patient])
 
-    def write_stats(self, calculate_true_negatives=True):
-        if calculate_true_negatives:
-            self._calculate_true_negatives()
+    def write_stats(self):
         with open('../Results/Stats/' + self.csv_name, 'w') as csvfile:
             writer = csv.writer(csvfile)
             header = ["Diagnosis", "Description", "AUC", "F-Score", "Specificity", "Sensitivity",
                       "Accuracy", "True Positives", "True Negatives", "False Positives",
                       "False Negatives"]
             writer.writerow(header)
-            for d in sorted(self._diags):
+            for d in sorted(self._selected_diags):
                 # print(d, self._stats[d])
                 row = []
                 row.append(d)
@@ -130,6 +131,7 @@ class Predictor(object):
                 row.append(self._d_auc(d))
                 row.append(self._d_fscore(d))
                 row.append(self._d_specificity(d))
+                row.append(self._d_sensitivity(d))
                 row.append(self._d_accuracy(d))
                 row.append(self._stats[d]["TP"])
                 row.append(self._stats[d]["TN"])
@@ -138,10 +140,7 @@ class Predictor(object):
                 writer.writerow(row)
 
     def _d_auc(self, d):
-        if self._auc_enabled:
-            return (metrics.roc_auc_score(self._true_vals[d], self._pred_vals[d]))
-        else:
-            return "NA"
+        return (metrics.roc_auc_score(self._true_vals[d], self._pred_vals[d]))
 
     def _d_specificity(self, d):
         if self._stats[d]["TP"] + self._stats[d]["FN"] == 0:

@@ -4,11 +4,11 @@ from predictor import Predictor
 class LatentFactors(Predictor):
 
     def __init__(self, filename):
-        self._auc_enabled = True
         self._props = {"window": 200, "size": 60, "decay": 10, "delta": 10, "rounds": 40,
                        "param_reg": 0.015, "latent_reg": 0.015, "factors": 1000}
         super(LatentFactors, self).__init__(filename)
         self._diags = ["d_584", "d_428", "d_272", "d_403", "d_427"]
+        self._auc_enabled = True
 
     def calculate_statistics(self):
         for diag in self._diags:

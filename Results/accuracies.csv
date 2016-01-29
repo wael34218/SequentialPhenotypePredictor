@@ -86,3 +86,26 @@
 0.6908565928777671,"{""decay"": 10, ""delta"": 10, ""factors"": 1000, ""latent_reg"": 0.015, ""model"": ""LatentFactors"", ""param_reg"": 0.015, ""rounds"": 40, ""size"": 60, ""window"": 200}",0.0
 0.6908565928777671,"{""decay"": 10, ""delta"": 10, ""factors"": 1000, ""latent_reg"": 0.015, ""model"": ""LatentFactors"", ""param_reg"": 0.015, ""rounds"": 40, ""size"": 60, ""window"": 200}",0.0
 0.5907152230971129,"{""decay"": 10, ""delta"": 10, ""factors"": 1000, ""latent_reg"": 0.015, ""model"": ""LatentFactors"", ""param_reg"": 0.015, ""rounds"": 40, ""size"": 60, ""window"": 200}",0.0
+0.5907152230971129,"{""decay"": 10, ""delta"": 10, ""factors"": 1000, ""latent_reg"": 0.015, ""model"": ""LatentFactors"", ""param_reg"": 0.015, ""rounds"": 40, ""size"": 60, ""window"": 200}",0.0
+0.6283532041728763,"{""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",5.0
+0.625,"{""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",5.0
+0.6285394932935916,"{""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",5.0
+0.5907152230971129,"{""decay"": 10, ""delta"": 10, ""factors"": 1000, ""latent_reg"": 0.015, ""model"": ""LatentFactors"", ""param_reg"": 0.015, ""rounds"": 40, ""size"": 60, ""window"": 200}",0.0
+0.8135150195025581,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.0
+0.8135150195025581,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.0
+0.8135150195025581,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.0
+0.8135150195025581,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.0
+0.8135150195025581,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.0
+0.8135150195025581,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.0
+0.8135150195025581,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.0
+0.8135150195025581,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.0
+0.2536345676510815,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.9120409300440707
+0.2536345676510815,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.9120409300440707
+0.2514867534572717,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.9143913682184287
+0.2514867534572717,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.9143913682184287
+0.270361177245327,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.8908565928777671
+0.31914290056228156,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.8266349222430475
+0.3169241679752799,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.8299478243250089
+0.7849045134491667,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.061172179727470744
+0.5108221873521134,"{""balanced"": true, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.03960248075917208
+0.5061645370993051,"{""balanced"": true, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""window"": 10}",0.023948292610027646
