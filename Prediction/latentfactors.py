@@ -1,14 +1,14 @@
-from predictor import Predictor
+from binarypredictor import BinaryPredictor
 
 
-class LatentFactors(Predictor):
+class LatentFactors(BinaryPredictor):
 
     def __init__(self, filename):
         self._props = {"window": 200, "size": 60, "decay": 10, "delta": 10, "rounds": 40,
                        "param_reg": 0.015, "latent_reg": 0.015, "factors": 1000}
         super(LatentFactors, self).__init__(filename)
         self._diags = ["d_584", "d_428", "d_272", "d_403", "d_427"]
-        self._auc_enabled = True
+        self._selected_diag = self._diags
 
     def calculate_statistics(self):
         for diag in self._diags:
@@ -41,8 +41,8 @@ class LatentFactors(Predictor):
 
 
 if __name__ == '__main__':
-    model = LatentFactors('../Data/w2v/mimic_train_me_0')
+    model = LatentFactors('../Data/w2v_diag/mimic_train_d_584_0')
     model.calculate_statistics()
-    model.report_accuracy(calculate_true_negatives=False)
-    model.write_stats(calculate_true_negatives=False)
+    model.report_accuracy()
+    model.write_stats()
     print(model.accuracy)

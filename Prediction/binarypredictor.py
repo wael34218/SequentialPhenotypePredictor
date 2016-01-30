@@ -16,14 +16,12 @@ class BinaryPredictor(object):
         self._uniq_events = set()
         self._diags = set()
         self._filename = filename
-        self._selected_diags = ["d_584", "d_518", "d_428", "d_427", "d_276", "d_486", "d_038",
-                                "d_599", "d_403", "d_507", "d_401", "d_785.5", "d_414", "d_285.1",
-                                "d_496", "d_511", "d_424", "d_272", "d_410"]
 
         with open(filename) as f:
             lines = f.readlines()
             for line in lines:
-                events = line.split("|")[2].split(" ") + line.split("|")[3].split(" ")
+                events = line.split("|")[2].split(" ") + line.split("|")[3].\
+                    replace("\n", "").split(" ")
                 self._uniq_events |= set(events)
                 self._diags |= set([x for x in events if x.startswith('d_')])
 
@@ -39,7 +37,7 @@ class BinaryPredictor(object):
         self._pred_vals = {}
         self._total_test = 0
         self._total_predictions = 0
-        for diag in self._selected_diags:
+        for diag in self._diags:
             self._stats[diag] = {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
             self._true_vals[diag] = []
             self._pred_vals[diag] = []
@@ -62,7 +60,7 @@ class BinaryPredictor(object):
                     self._diag_to_desc[d] = "Not Found"
 
     def stat_prediction(self, prediction, actual, diag):
-        prob = (prediction > 0.8)
+        prob = (prediction > self._threshold)
         true_condition = (actual == 1)
 
         if prob:
@@ -91,6 +89,12 @@ class BinaryPredictor(object):
         for i, train in enumerate(train_files):
             self.train(train_files[i], diags[i], validation_set[i])
             self.test(test_files[i], diags[i], validation_set[i])
+
+    def cross_validate_combined(self, train_files, test_files):
+        self._reset_stats()
+        for i, train in enumerate(train_files):
+            self.train(train_files[i])
+            self.test(test_files[i])
 
     @property
     def prediction_per_patient(self):
@@ -123,8 +127,7 @@ class BinaryPredictor(object):
                       "Accuracy", "True Positives", "True Negatives", "False Positives",
                       "False Negatives"]
             writer.writerow(header)
-            for d in sorted(self._selected_diags):
-                # print(d, self._stats[d])
+            for d in sorted(self._diags):
                 row = []
                 row.append(d)
                 row.append(self._diag_to_desc[d])

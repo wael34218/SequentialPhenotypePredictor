@@ -7,10 +7,12 @@ from collections import defaultdict
 
 class CbowSim(BinaryPredictor):
 
-    def __init__(self, filename, window=600, size=600, decay=5, stopwords=5, balanced=False):
+    def __init__(self, filename, window=600, size=600, decay=5, stopwords=5,
+                 threshold=0.5, balanced=False):
         self._window = window
         self._size = size
         self._decay = decay
+        self._threshold = threshold
         self._stopwords = stopwords
         self._stopwordslist = []
 
@@ -18,7 +20,7 @@ class CbowSim(BinaryPredictor):
 
         self._balanced = balanced
         self._props = {"window": window, "size": size, "decay": decay, "stopwords": stopwords,
-                       "balanced": balanced}
+                       "balanced": balanced, "threshold":threshold}
         super(CbowSim, self).__init__(filename)
 
     def train(self, filename, diagnosis, validation_set):
@@ -94,12 +96,15 @@ if __name__ == '__main__':
                         help='Set number of stop words (default: 5)')
     parser.add_argument('-b', '--balanced', action="store", default=False, type=bool,
                         help='Choose if data set is balanced or not (default: False)')
+    parser.add_argument('-t', '--threshold', action="store", default=0.5, type=float,
+                        help='Threshold for prediction probability (default: 0.5)')
     args = parser.parse_args()
 
     train_files = []
     test_files = []
     model = CbowSim('../Data/w2v_diag/mimic_train_d_038_0',
-                    args.window, args.size, args.decay, args.stopwords, args.balanced)
+                    args.window, args.size, args.decay, args.stopwords,
+                    args.threshold, args.balanced)
 
     folder = "../Data/w2v_diag_balanced/" if args.balanced else "../Data/w2v_diag/"
     print(folder)
