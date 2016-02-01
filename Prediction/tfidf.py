@@ -56,7 +56,7 @@ class TFIDF(BinaryPredictor):
             termsc = sum(diagtermc[d].values())
             self._ldiagtermp[d] = defaultdict(
                 lambda: 0, {t: math.log(v * 1.0 / termsc) for t, v in diagtermc[d].items()})
-            self._ldiagp[d] = math.log(diagc[d] / total_count)
+            self._ldiagp[d] = math.log(diagc[d] * 1.0 / total_count)
 
         for t in self._termc:
             self._lidf[t] = math.log(total_count / self._termc[t] * 1.0)
