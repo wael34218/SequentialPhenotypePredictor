@@ -7,7 +7,7 @@ from collections import defaultdict
 
 class CbowSim(BinaryPredictor):
 
-    def __init__(self, filename, window=600, size=600, decay=5, stopwords=5,
+    def __init__(self, filename, window=600, size=600, decay=5, stopwords=0,
                  threshold=0.5, balanced=False):
         self._window = window
         self._size = size
@@ -20,8 +20,11 @@ class CbowSim(BinaryPredictor):
 
         self._balanced = balanced
         self._props = {"window": window, "size": size, "decay": decay, "stopwords": stopwords,
-                       "balanced": balanced, "threshold":threshold}
+                       "balanced": balanced, "threshold": threshold}
         super(CbowSim, self).__init__(filename)
+        self._diags = ["d_584", "d_518", "d_428", "d_427", "d_276", "d_486", "d_038", "d_599",
+                       "d_403", "d_507", "d_401", "d_785.5", "d_414", "d_285.1", "d_496", "d_511",
+                       "d_424", "d_272", "d_410"]
 
     def train(self, filename, diagnosis, validation_set):
         if validation_set in self._sim_mat:# and not self._balanced:
@@ -52,7 +55,7 @@ class CbowSim(BinaryPredictor):
                                                  size=self._size, min_count=1, workers=20)
 
         self._sim_mat[validation_set] = {}
-        for diag in self._selected_diags:
+        for diag in self._diags:
             words = self._model.most_similar(diag, topn=len(self._uniq_events))
             sim_array = [0] * len(self._uniq_events)
             sim_array[self._events_index.index(diag)] = 1
@@ -110,7 +113,7 @@ if __name__ == '__main__':
     print(folder)
     diags = []
     validation_set = []
-    for d in model._selected_diags:
+    for d in model._diags:
         for i in range(10):
             train_files.append(folder+'mimic_train_'+d+'_'+str(i))
             test_files.append(folder+'mimic_test_'+d+'_'+str(i))

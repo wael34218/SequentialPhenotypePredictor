@@ -16,6 +16,7 @@ class BinaryPredictor(object):
         self._uniq_events = set()
         self._diags = set()
         self._filename = filename
+        self._threshold = 0
 
         with open(filename) as f:
             lines = f.readlines()
