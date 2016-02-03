@@ -12,10 +12,8 @@ class CbowSim(BinaryPredictor):
         self._window = window
         self._size = size
         self._decay = decay
-        self._threshold = threshold
         self._stopwords = stopwords
         self._stopwordslist = []
-
         self._sim_mat = {}
 
         self._balanced = balanced
@@ -25,6 +23,8 @@ class CbowSim(BinaryPredictor):
         self._diags = ["d_584", "d_518", "d_428", "d_427", "d_276", "d_486", "d_038", "d_599",
                        "d_403", "d_507", "d_401", "d_785.5", "d_414", "d_285.1", "d_496", "d_511",
                        "d_424", "d_272", "d_410"]
+
+        self._threshold = threshold
 
     def train(self, filename, diagnosis, validation_set):
         if validation_set in self._sim_mat:# and not self._balanced:
@@ -99,8 +99,8 @@ if __name__ == '__main__':
                         help='Set number of stop words (default: 5)')
     parser.add_argument('-b', '--balanced', action="store", default=False, type=bool,
                         help='Choose if data set is balanced or not (default: False)')
-    parser.add_argument('-t', '--threshold', action="store", default=0.5, type=float,
-                        help='Threshold for prediction probability (default: 0.5)')
+    parser.add_argument('-t', '--threshold', action="store", default=0.2, type=float,
+                        help='Threshold for prediction probability (default: 0.2)')
     args = parser.parse_args()
 
     train_files = []
