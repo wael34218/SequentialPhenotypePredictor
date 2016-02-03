@@ -59,14 +59,15 @@ class CollaborativeFiltering(BinaryPredictor):
                 for d in self._diags:
                     actual = int(d in diags)
                     probability = 0
+                    norm = 0
                     # norm = 0
                     for i, pat_sim in enumerate(sim):
                         if d in self._pat_diag[i]:
-                            probability += pat_sim - avg_sim # max(0, pat_sim - avg_sim)
-                        # norm += max(0, pat_sim - avg_sim)
+                            probability += max(0, pat_sim - avg_sim)
+                        norm += max(0, pat_sim - avg_sim)
 
-                    # prediction = probability * 1.0 / norm
-                    self.stat_prediction(probability, actual, d)
+                    prediction = probability * 1.0 / norm
+                    self.stat_prediction(prediction, actual, d)
 
 
 if __name__ == '__main__':
