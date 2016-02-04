@@ -85,11 +85,11 @@ if __name__ == '__main__':
 
     train_files = []
     test_files = []
-    model = CbowSim('../Data/w2v/mimic_train_me_0', args.window, args.size, args.decay, args.stopwords)
+    model = CbowSim('../../Data/w2v/mimic_train_me_0', args.window, args.size, args.decay, args.stopwords)
 
     for i in range(10):
-        train_files.append('../Data/w2v/mimic_train_me_'+str(i))
-        test_files.append('../Data/w2v/mimic_test_me_'+str(i))
+        train_files.append('../../Data/w2v/mimic_train_me_'+str(i))
+        test_files.append('../../Data/w2v/mimic_test_me_'+str(i))
 
     model.cross_validate(train_files, test_files)
     model.report_accuracy()

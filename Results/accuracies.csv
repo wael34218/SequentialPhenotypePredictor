@@ -164,3 +164,6 @@
 0.2517299022339294,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""threshold"": 0.8, ""window"": 10}",0.9148574033736893
 0.7769515222126538,"{""balanced"": false, ""decay"": 5, ""model"": ""CbowSim"", ""size"": 600, ""stopwords"": 5, ""threshold"": 0.75, ""window"": 10}",0.0770072438073046
 0.8522350550743236,"{""decay"": 0.0, ""model"": ""CollaborativeFiltering"", ""size"": 200, ""threshold"": 1.0, ""window"": 10}",0.018602288525291413
+0.820778526360817,"{""decay"": 0.0, ""model"": ""TFIDF"", ""ngrams"": 3, ""skip"": 3}",0.04187787402416854
+0.8007271949524115,"{""decay"": 0.0, ""model"": ""CollaborativeFiltering"", ""size"": 200, ""threshold"": 1.0, ""window"": 10}",0.10852315260399957
+0.8608491070473746,"{""decay"": 0.0, ""model"": ""CollaborativeFiltering"", ""size"": 200, ""threshold"": 1.0, ""window"": 10}",0.0

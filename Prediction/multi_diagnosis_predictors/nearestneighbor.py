@@ -104,13 +104,13 @@ if __name__ == '__main__':
                         help='Set number of nearest neighbors (default: 3)')
     args = parser.parse_args()
 
-    model = NearestNeighbor('../Data/w2v/mimic_train_me_0', decay=args.decay, k=args.k,
+    model = NearestNeighbor('../../Data/w2v/mimic_train_me_0', decay=args.decay, k=args.k,
                             f=args.features, window=args.window, size=args.size)
     train_files = []
     test_files = []
     for i in range(1):
-        train_files.append('../Data/w2v/mimic_train_me_'+str(i))
-        test_files.append('../Data/w2v/mimic_test_me_'+str(i))
+        train_files.append('../../Data/w2v/mimic_train_me_'+str(i))
+        test_files.append('../../Data/w2v/mimic_test_me_'+str(i))
 
     model.cross_validate(train_files, test_files)
     model.report_accuracy()

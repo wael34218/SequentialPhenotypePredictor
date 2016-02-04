@@ -1,6 +1,6 @@
 import os
 import sys
-lib_path = os.path.abspath(os.path.join('..', 'lib'))
+lib_path = os.path.abspath(os.path.join('..','..', 'lib'))
 sys.path.append(lib_path)
 
 from icd9 import ICD9
@@ -44,7 +44,7 @@ class Predictor(object):
 
     def _generate_icd9_lookup(self):
         self._diag_to_desc = {}
-        tree = ICD9('../lib/icd9/codes.json')
+        tree = ICD9('../../lib/icd9/codes.json')
 
         for d in self._diags:
             try:
