@@ -85,13 +85,7 @@ class BinaryPredictor(object):
         else:
             assert False, "This shouldnt happen"
 
-    def cross_validate(self, train_files, test_files, diags, validation_set):
-        self._reset_stats()
-        for i, train in enumerate(train_files):
-            self.train(train_files[i], diags[i], validation_set[i])
-            self.test(test_files[i], diags[i], validation_set[i])
-
-    def cross_validate_combined(self, train_files, test_files):
+    def cross_validate(self, train_files, test_files):
         self._reset_stats()
         for i, train in enumerate(train_files):
             self.train(train_files[i])

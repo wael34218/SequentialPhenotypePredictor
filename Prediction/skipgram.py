@@ -48,7 +48,7 @@ if __name__ == '__main__':
         train_files.append('../Data/seq_combined/mimic_train_'+str(i))
         test_files.append('../Data/seq_combined/mimic_test_'+str(i))
 
-    model.cross_validate_combined(train_files, test_files)
+    model.cross_validate(train_files, test_files)
     model.report_accuracy()
     model.write_stats()
     print(model.accuracy)

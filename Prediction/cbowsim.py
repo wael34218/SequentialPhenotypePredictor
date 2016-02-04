@@ -20,16 +20,9 @@ class CbowSim(BinaryPredictor):
         self._props = {"window": window, "size": size, "decay": decay, "stopwords": stopwords,
                        "balanced": balanced, "threshold": threshold}
         super(CbowSim, self).__init__(filename)
-        self._diags = ["d_584", "d_518", "d_428", "d_427", "d_276", "d_486", "d_038", "d_599",
-                       "d_403", "d_507", "d_401", "d_785.5", "d_414", "d_285.1", "d_496", "d_511",
-                       "d_424", "d_272", "d_410"]
-
         self._threshold = threshold
 
-    def train(self, filename, diagnosis, validation_set):
-        if validation_set in self._sim_mat:# and not self._balanced:
-            return
-
+    def train(self, filename):
         self._filename = filename
         self._word_counter = defaultdict(lambda: 0)
 
@@ -54,20 +47,20 @@ class CbowSim(BinaryPredictor):
             self._model = gensim.models.Word2Vec(newsentences, sg=0, window=self._window,
                                                  size=self._size, min_count=1, workers=20)
 
-        self._sim_mat[validation_set] = {}
+        self._sim_mat = {}
         for diag in self._diags:
             words = self._model.most_similar(diag, topn=len(self._uniq_events))
             sim_array = [0] * len(self._uniq_events)
             sim_array[self._events_index.index(diag)] = 1
             for event, distance in words:
                 sim_array[self._events_index.index(event)] = distance
-            self._sim_mat[validation_set][diag] = sim_array
+            self._sim_mat[diag] = sim_array
 
-    def test(self, filename, diagnosis, validation_set):
+    def test(self, filename):
         with open(filename) as f:
             for line in f:
                 feed_events = line.split("|")[2].split(" ")
-                actual = int(line[0])
+                actual = line.split("|")[0].split(",")
                 test_array = [0] * len(self._uniq_events)
 
                 feed_events = [w for w in feed_events if w not in self._stopwordslist]
@@ -76,15 +69,16 @@ class CbowSim(BinaryPredictor):
                 for i, e in enumerate(feed_events):
                     test_array[self._events_index.index(e)] += math.exp(self._decay*(i-te+1)/te)
 
-                sim_array = self._sim_mat[validation_set][diagnosis]
-                dot_product = sum([(x*y) for x, y in zip(test_array, sim_array)])
-                prediction = (dot_product * 100) / self._size
-                if prediction > 1:
-                    prediction = 1
-                elif prediction <0:
-                    prediction = 0
+                for diag in self._diags:
+                    sim_array = self._sim_mat[diag]
+                    dot_product = sum([(x*y) for x, y in zip(test_array, sim_array)])
+                    prediction = (dot_product * 100) / self._size
+                    if prediction > 1:
+                        prediction = 1
+                    elif prediction < 0:
+                        prediction = 0
 
-                self.stat_prediction(prediction, actual, diagnosis)
+                    self.stat_prediction(prediction, (diag in actual), diag)
 
 
 if __name__ == '__main__':
@@ -105,22 +99,15 @@ if __name__ == '__main__':
 
     train_files = []
     test_files = []
-    model = CbowSim('../Data/w2v_diag/mimic_train_d_038_0',
+    model = CbowSim('../Data/seq_combined/mimic_train_0',
                     args.window, args.size, args.decay, args.stopwords,
                     args.threshold, args.balanced)
 
-    folder = "../Data/w2v_diag_balanced/" if args.balanced else "../Data/w2v_diag/"
-    print(folder)
-    diags = []
-    validation_set = []
-    for d in model._diags:
-        for i in range(10):
-            train_files.append(folder+'mimic_train_'+d+'_'+str(i))
-            test_files.append(folder+'mimic_test_'+d+'_'+str(i))
-            diags.append(d)
-            validation_set.append(i)
+    for i in range(10):
+        train_files.append('../Data/seq_combined/mimic_train_'+str(i))
+        test_files.append('../Data/seq_combined/mimic_test_'+str(i))
 
-    model.cross_validate(train_files, test_files, diags, validation_set)
+    model.cross_validate(train_files, test_files)
     model.report_accuracy()
     print(model.accuracy)
     model.write_stats()
