@@ -9,7 +9,6 @@ delta = 10
 uniq_g_feat = set()
 uniq_p_feat = ["gender", "age", "white", "asian", "hispanic", "black", "multi", "portuguese",
                "american", "mideast", "hawaiian", "other"]
-selected_diags = ["d_584", "d_428", "d_272", "d_403", "d_427"]
 
 
 def set_g_features(t_events):
@@ -146,7 +145,7 @@ train = {}
 test = {}
 
 # To include all diagnoses change it to total_diags
-diags = selected_diags
+diags = tota_diags
 for diag in diags:
     for i in range(10):
         train[diag+str(i)] = open('../Data/svd/mimic_train_'+diag+'_'+str(i), 'w')
