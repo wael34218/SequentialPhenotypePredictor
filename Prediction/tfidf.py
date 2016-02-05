@@ -85,7 +85,7 @@ class TFIDF(BinaryPredictor):
 
                     actual = int(d in diags)
                     prediction = score
-                    self.stat_prediction(prediction, actual, d, (d in events))
+                    self.stat_prediction(prediction, actual, d)
 
 
 if __name__ == '__main__':
