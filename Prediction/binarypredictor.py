@@ -7,6 +7,8 @@ from icd9 import ICD9
 from sklearn import metrics
 import csv
 import json
+from collections import defaultdict
+import gensim
 
 
 class BinaryPredictor(object):
@@ -16,7 +18,6 @@ class BinaryPredictor(object):
         self._uniq_events = set()
         self._diags = set()
         self._filename = filename
-        self._threshold = 0
 
         with open(filename) as f:
             lines = f.readlines()
@@ -60,7 +61,63 @@ class BinaryPredictor(object):
                 else:
                     self._diag_to_desc[d] = "Not Found"
 
-    def stat_prediction(self, prediction, actual, diag):
+    def base_train(self, filename, skipgram=0):
+        '''
+        This function trains the sequences on word2vec exculding stopwords and calculates prior
+        probabilities. These 2 functions jumbled into one for efficiency.
+        '''
+        self._filename = filename
+        self._prior = {}
+        self._model = None
+
+        diag_totals = defaultdict(lambda: 0)
+        diag_joined = defaultdict(lambda: 0)
+        sentences = []
+        self.seq_count = 0
+
+        with open(filename) as f:
+            for s in f:
+                self.seq_count += 1
+                sentences.append(s.split("|")[2].split(" ") +
+                                 s.split("|")[3].replace("\n", "").split(" "))
+                next_diags = s.split("|")[0].split(",")
+                prev_diags = [e for e in s.split("|")[2].split(" ") if e.startswith("d_")]
+                for d in prev_diags:
+                    diag_totals[d] += 1
+                    if d in next_diags:
+                        diag_joined[d] += 1
+
+        for d in diag_totals:
+            self._prior[d] = diag_joined[d] * 1.0 / diag_totals[d]
+
+        if self._stopwords != 0:
+            sentences = self._remove_stopwords(sentences)
+
+        self._model = gensim.models.Word2Vec(sentences, sg=skipgram, window=self._window,
+                                             size=self._size, min_count=1, workers=20)
+
+    def _remove_stopwords(self, sentences):
+        '''
+        This function has shown over and over again that it is not useful
+        '''
+        self._word_counter = defaultdict(lambda: 0)
+        for sentence in sentences:
+            for word in sentence:
+                self._word_counter[word] += 1
+
+        inverse = {v: k for k, v in self._word_counter.items()}
+        topwords = sorted(inverse.keys(), reverse=True)[:self._stopwords]
+        self._stopwordslist = [inverse[k] for k in topwords]
+
+        newsentences = []
+        for s in sentences:
+            newsentences.append([w for w in s if w not in self._stopwordslist])
+
+        return newsentences
+
+    def stat_prediction(self, prediction, actual, diag, prior=None):
+        if prior is not None:
+            prediction *= abs((self._prior[diag] - int(not prior)))
         prob = (prediction > self._threshold)
         true_condition = (actual == 1)
 

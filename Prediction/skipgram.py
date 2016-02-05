@@ -1,36 +1,37 @@
-import gensim
 from collections import defaultdict
 import argparse
 from binarypredictor import BinaryPredictor
 
 
 class SkipGram(BinaryPredictor):
-    def __init__(self, filename, window=100, size=200):
+    def __init__(self, filename, window=10, size=600, decay=5, stopwords=0, threshold=0.5):
         self._window = window
         self._size = size
-        self._props = {"window": window, "size": size}
+        self._decay = decay
+        self._stopwords = stopwords
+        self._threshold = threshold
+        self._stopwordslist = []
+        self._props = {"window": window, "size": size, "decay": decay, "stopwords": stopwords,
+                       "threshold": threshold}
         super(SkipGram, self).__init__(filename)
-        self._threshold = 0.25
 
     def train(self, filename):
-        with open(filename) as f:
-            sentences = [s.split('|')[2].split(" ") + s[:-1].split("|")[3].split(" ")
-                         for s in f.readlines()]
-            self._model = gensim.models.Word2Vec(sentences, sg=1, size=self._size,
-                                                 window=self._window, min_count=1, workers=20)
+        self.base_train(filename, skipgram=1)
 
     def test(self, filename):
         with open(filename) as f:
             lines = f.readlines()
             for line in lines:
                 feed_events = line.split("|")[2].split(" ")
+                feed_events = [w for w in feed_events if w not in self._stopwordslist]
                 actual = line.split("|")[0].split(",")
                 result = defaultdict(
                     lambda: 1, {d: sim for d, sim in self._model.most_similar(
                         feed_events, topn=self._nevents)})
 
                 for diag in self._diags:
-                    self.stat_prediction(result[diag], (diag in actual), diag)
+                    self.stat_prediction(result[diag], (diag in actual), diag,
+                                         (diag in feed_events))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SkipGram Similarity')
@@ -38,11 +39,18 @@ if __name__ == '__main__':
                         help='Set max skip length between words (default: 10)')
     parser.add_argument('-s', '--size', action="store", default=600, type=int,
                         help='Set size of word vectors (default: 600)')
+    parser.add_argument('-d', '--decay', action="store", default=5, type=float,
+                        help='Set exponential decay through time (default: 5)')
+    parser.add_argument('-sw', '--stopwords', action="store", default=0, type=int,
+                        help='Set number of stop words (default: 0)')
+    parser.add_argument('-t', '--threshold', action="store", default=0.2, type=float,
+                        help='Threshold for prediction probability (default: 0.2)')
     args = parser.parse_args()
 
     train_files = []
     test_files = []
-    model = SkipGram('../Data/seq_combined/mimic_train_0', args.window, args.size)
+    model = SkipGram('../Data/seq_combined/mimic_train_0',
+                     args.window, args.size, args.decay, args.stopwords, args.threshold)
 
     for i in range(10):
         train_files.append('../Data/seq_combined/mimic_train_'+str(i))

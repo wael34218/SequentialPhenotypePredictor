@@ -12,9 +12,9 @@ class TFIDF(BinaryPredictor):
         self._ngrams = ngrams
         self._skip = skip
         self._decay = decay
+        self._threshold = threshold
         self._props = {"ngrams": ngrams, "decay": decay, "skip": skip}
         super(TFIDF, self).__init__(filename)
-        self._threshold = threshold
 
     def _generate_grams(self, sequence):
         termc = defaultdict(lambda: 0)
@@ -85,7 +85,7 @@ class TFIDF(BinaryPredictor):
 
                     actual = int(d in diags)
                     prediction = score
-                    self.stat_prediction(prediction, actual, d)
+                    self.stat_prediction(prediction, actual, d, (d in events))
 
 
 if __name__ == '__main__':

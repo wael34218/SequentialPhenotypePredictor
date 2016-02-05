@@ -1,32 +1,26 @@
 import argparse
-import gensim
 from binarypredictor import BinaryPredictor
 
 
 class CollaborativeFiltering(BinaryPredictor):
-
-    def __init__(self, filename, window, size, decay, threshold):
-        self._filename = filename
+    def __init__(self, filename, window=10, size=600, decay=5, stopwords=0, threshold=0.5):
         self._window = window
         self._size = size
-        self._props = {"window": window, "size": size, "decay": decay, "threshold": threshold}
-        super(CollaborativeFiltering, self).__init__(filename)
+        self._decay = decay
+        self._stopwords = stopwords
         self._threshold = threshold
+        self._stopwordslist = []
+        self._props = {"window": window, "size": size, "decay": decay, "stopwords": stopwords,
+                       "threshold": threshold}
+        super(CollaborativeFiltering, self).__init__(filename)
 
     def train(self, filename):
         print("Train", filename)
-        self._filename = filename
-        self._pat_vec = []
-
-        # Train vectors
-        with open(filename) as f:
-            sentences = [s.split("|")[2].split(" ") + s.split("|")[3].replace("\n", "").split(" ")
-                         for s in f.readlines()]
-            self._model = gensim.models.Word2Vec(sentences, sg=0, window=self._window,
-                                                 size=self._size, min_count=1, workers=20)
+        self.base_train(filename)
 
         # For patient vectors
-        self._pat_diag = [{} for _ in range(len(sentences))]
+        self._pat_diag = [{} for _ in range(self.seq_count)]
+        self._pat_vec = []
         with open(filename) as f:
             for i, line in enumerate(f.readlines()):
                 vec = [0] * self._size
@@ -44,6 +38,7 @@ class CollaborativeFiltering(BinaryPredictor):
         with open(filename) as f:
             for line in f:
                 feed_events = line.split("|")[2].split(" ")
+                feed_events = [w for w in feed_events if w not in self._stopwordslist]
                 diags = line.split("|")[0].split(",")
 
                 vec = [0] * self._size
@@ -68,22 +63,29 @@ class CollaborativeFiltering(BinaryPredictor):
 
                     prediction = probability * 1.0 / norm
                     self.stat_prediction(prediction, actual, d)
+                    self.stat_prediction(prediction, actual, d, (d in feed_events))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Collaborative Filtering')
     parser.add_argument('-w', '--window', action="store", default=10, type=int,
                         help='Set max skip length between words (default: 10)')
-    parser.add_argument('-s', '--size', action="store", default=200, type=int,
-                        help='Set size of word vectors (default: 200)')
-    parser.add_argument('-d', '--decay', action="store", default=0.0, type=float,
-                        help='Decay (default: 0.0)')
-    parser.add_argument('-t', '--threshold', action="store", default=0.0, type=float,
-                        help='Decay (default: 0.0)')
+    parser.add_argument('-s', '--size', action="store", default=600, type=int,
+                        help='Set size of word vectors (default: 600)')
+    parser.add_argument('-d', '--decay', action="store", default=5, type=float,
+                        help='Set exponential decay through time (default: 5)')
+    parser.add_argument('-sw', '--stopwords', action="store", default=0, type=int,
+                        help='Set number of stop words (default: 0)')
+    parser.add_argument('-t', '--threshold', action="store", default=0.2, type=float,
+                        help='Threshold for prediction probability (default: 0.2)')
+    args = parser.parse_args()
+
+    train_files = []
+    test_files = []
 
     args = parser.parse_args()
-    model = CollaborativeFiltering('../Data/seq_combined/mimic_train_0',
-                                   args.window, args.size, args.decay, args.threshold)
+    model = CollaborativeFiltering('../Data/seq_combined/mimic_train_0', args.window,
+                                   args.size, args.decay, args.stopwords, args.threshold)
     train_files = []
     test_files = []
 
