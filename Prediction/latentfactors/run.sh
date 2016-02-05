@@ -1,8 +1,8 @@
 #!/bin/bash
 # example running script for basicMF
 
-selected_diags=("d_584" "d_428" "d_272" "d_403" "d_427")
-rounds=40
+selected_diags=("d_244" "d_327" "d_493" "d_250" "d_403" "d_274" "d_427" "d_428" "d_496" "d_272" "d_414" "d_530" "d_585" "d_401" "d_412" "d_584" "d_486" "d_285.9" "d_511" "d_410" "d_038" "d_458" "d_997" "d_785.5" "d_287.5" "d_518" "d_507" "d_276" "d_285.1" "d_995" "d_599" "d_774" "d_311" "d_416" "d_424" "d_305")
+rounds=100
 
 for diag in "${selected_diags[@]}"
 do
