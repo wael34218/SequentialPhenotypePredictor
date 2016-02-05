@@ -1,4 +1,5 @@
 #!/bin/bash
+source ~/EnvPythonMimic/bin/activate
 
 for i in `seq 275 25 475`; do
     echo "============ New size $i ============"
