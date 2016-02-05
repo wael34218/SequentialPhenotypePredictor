@@ -7,15 +7,18 @@ This project assumes that you already have access to some MIMICIII database. If 
 
 https://mimic.physionet.org/tutorials/install_mimic_locally/
 
-You should also install gensim python library: https://radimrehurek.com/gensim/install.html
 
+## Installation
 
+    pip install -r requirements.txt
+
+## Run
 To take the code for a spin run the following commands:
 
     cd DataPrep
     psql -U mimic -a -f allevents.sql
     python generate_icd_levels.py
-    python generate_sequences.py
+    python generate_seq_combined.py
 
     cd ../Prediction
     python cbowsim.py --window 500 --size 500 --decay 4
