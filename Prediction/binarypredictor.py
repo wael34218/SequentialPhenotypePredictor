@@ -9,6 +9,7 @@ import csv
 import json
 from collections import defaultdict
 import gensim
+import operator
 
 
 class BinaryPredictor(object):
@@ -169,8 +170,15 @@ class BinaryPredictor(object):
             writer = csv.writer(csvfile)
             props = {k: self._props[k] for k in self._props}
             props["model"] = self.__class__.__name__
+            row = {}
+            for d in self._diags:
+                row[d] = self._d_auc(d)
+
+            sorted_row = sorted(row.items(), key=operator.itemgetter(1), reverse=True)
+            top_auc = [i[1] for i in sorted_row[:10]]
+            top_diag = [i[0] for i in sorted_row[:10]]
             writer.writerow([self.accuracy, json.dumps(props, sort_keys=True),
-                             self.prediction_per_patient])
+                             self.prediction_per_patient, top_auc, top_diag])
 
     def write_stats(self):
         with open('../Results/Stats/' + self.csv_name, 'w') as csvfile:
