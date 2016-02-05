@@ -5,7 +5,7 @@ import random
 import gensim
 
 coeff = 10.0
-delta = 10
+delta = 20
 uniq_g_feat = set()
 uniq_p_feat = ["gender", "age", "white", "asian", "hispanic", "black", "multi", "portuguese",
                "american", "mideast", "hawaiian", "other"]
@@ -145,7 +145,7 @@ train = {}
 test = {}
 
 # To include all diagnoses change it to total_diags
-diags = tota_diags
+diags = total_diags
 for diag in diags:
     for i in range(10):
         train[diag+str(i)] = open('../Data/svd/mimic_train_'+diag+'_'+str(i), 'w')
