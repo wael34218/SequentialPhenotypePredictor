@@ -1,4 +1,4 @@
-### Predicting MIMICIII Last Admission Diagnosis
+# Predicting MIMICIII Last Admission Diagnosis
 
 
 ## How to run
@@ -34,7 +34,7 @@ For plotting results you could use plot.py. For example:
 
     python plot.py -x decay --filters size:300 model:CbowSim
 
-# Run SVD Feature model (computationally expensive)
+### Run SVD Feature model (computationally expensive)
 
     cd DataPrep
     python generate_w2v.py
