@@ -10,7 +10,14 @@ https://mimic.physionet.org/tutorials/install_mimic_locally/
 
 ## Installation
 
+    sudo apt-get install python-psycopg2
+    sudo apt-get install libpq-dev
     pip install -r requirements.txt
+
+    cd lib/svdfeature
+    make
+    cd tools
+    make
 
 ## Run
 To take the code for a spin run the following commands:
@@ -26,6 +33,17 @@ To take the code for a spin run the following commands:
 For plotting results you could use plot.py. For example:
 
     python plot.py -x decay --filters size:300 model:CbowSim
+
+# Run SVD Feature model (computationally expensive)
+
+    cd DataPrep
+    python generate_w2v.py
+    python generate_svd.py
+    python balance_svd.py
+    cd ../Prediction/latentfactors/
+    ./run.sh
+    cd ..
+    python latentfactors.py
 
 
 ## Libraries
