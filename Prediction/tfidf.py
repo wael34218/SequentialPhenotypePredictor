@@ -8,12 +8,17 @@ import itertools
 
 class TFIDF(BinaryPredictor):
 
-    def __init__(self, filename, ngrams=3, skip=3, decay=0, threshold=0, balanced=False):
+    def __init__(self, filename, ngrams=3, skip=3, decay=0, stopwords=0,
+                 threshold=0, balanced=False):
         self._ngrams = ngrams
         self._skip = skip
         self._decay = decay
+        self._stopwords = stopwords
         self._threshold = threshold
-        self._props = {"ngrams": ngrams, "decay": decay, "skip": skip}
+        # Stopwords are not actually calculated - added to comply with the same interface as other
+        # predictors
+        self._stopwordslist = []
+        self._props = {"ngrams": ngrams, "decay": decay, "skip": skip, "stopwords": stopwords}
         super(TFIDF, self).__init__(filename)
 
     def _generate_grams(self, sequence):
@@ -48,6 +53,10 @@ class TFIDF(BinaryPredictor):
 
         terme = defaultdict(lambda: 0)
 
+        self._prior = {}
+        diag_joined = defaultdict(lambda: 0)
+        diag_totals = defaultdict(lambda: 0)
+
         with open(filename) as f:
             for s in f.readlines():
                 total_count += 1
@@ -63,7 +72,15 @@ class TFIDF(BinaryPredictor):
                     for t, c in terms:
                         diagtermc[d][t] += c
 
+                # for prior probability calculation
+                prev_diags = [e for e in s.split("|")[2].split(" ") if e.startswith("d_")]
+                for d in prev_diags:
+                    diag_totals[d] += 1
+                    if d in diags:
+                        diag_joined[d] += 1
+
         for d in self._diags:
+            self._prior[d] = diag_joined[d] * 1.0 / diag_totals[d]
             termsc = sum(diagtermc[d].values())
             self._ldiagtermp[d] = defaultdict(
                 lambda: 0, {t: math.log((v * 1.0) / termsc) for t, v in diagtermc[d].items()})
@@ -72,21 +89,28 @@ class TFIDF(BinaryPredictor):
         for t in terme:
             self._lidf[t] = math.log(total_count * 1.0 / terme[t])
 
+    def predict(self, feed_events):
+        predictions = {}
+        terms = self._generate_grams(feed_events)
+
+        for diag in self._diags:
+            score = self._ldiagp[diag]
+            for t, c in terms:
+                score += c * self._lidf[t] * self._ldiagtermp[diag][t]
+            predictions[diag] = score
+
+        return predictions
+
     def test(self, filename):
         with open(filename) as f:
-            for s in f.readlines():
-                events = s.split("|")[2].split(" ")
-                diags = s.split("|")[0].split(",")
-                terms = self._generate_grams(events)
-                for d in self._diags:
-                    score = self._ldiagp[d]
-                    for t, c in terms:
-                        score += c * self._lidf[t] * self._ldiagtermp[d][t]
-
-                    actual = int(d in diags)
-                    prediction = score
-                    self.stat_prediction(prediction, actual, d)
-
+            for line in f:
+                feed_events = line.split("|")[2].split(" ")
+                feed_events = [w for w in feed_events if w not in self._stopwordslist]
+                actual = line.split("|")[0].split(",")
+                predictions = self.predict(feed_events)
+                for diag in self._diags:
+                    self.stat_prediction(predictions[diag], (diag in actual), diag,
+                                         (diag in feed_events))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='TFIDF')
@@ -96,6 +120,8 @@ if __name__ == '__main__':
                         help='Skipgram (default: 3)')
     parser.add_argument('-d', '--decay', action="store", default=0.0, type=float,
                         help='decay (default: 0.0)')
+    parser.add_argument('-sw', '--stopwords', action="store", default=0, type=int,
+                        help='Set number of stop words (default: 0)')
     parser.add_argument('-t', '--threshold', action="store", default=0.0, type=float,
                         help='Decay (default: 0.0)')
     args = parser.parse_args()
@@ -103,7 +129,7 @@ if __name__ == '__main__':
     train_files = []
     test_files = []
     model = TFIDF('../Data/seq_combined/mimic_train_0',
-                  args.ngrams, args.skip, args.decay, args.threshold)
+                  args.ngrams, args.skip, args.decay, args.stopwords, args.threshold)
 
     for i in range(10):
         train_files.append('../Data/seq_combined/mimic_train_'+str(i))

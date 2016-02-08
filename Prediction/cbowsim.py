@@ -28,29 +28,34 @@ class CbowSim(BinaryPredictor):
                 sim_array[self._events_index.index(event)] = distance
             self._sim_mat[diag] = sim_array
 
+    def predict(self, feed_events):
+        predictions = {}
+        te = len(feed_events)
+        test_array = [0] * len(self._uniq_events)
+        for i, e in enumerate(feed_events):
+            test_array[self._events_index.index(e)] += math.exp(self._decay*(i-te+1)/te)
+
+        for diag in self._diags:
+            sim_array = self._sim_mat[diag]
+            dot_product = sum([(x*y) for x, y in zip(test_array, sim_array)])
+            prediction = (dot_product * 100) / self._size
+            if prediction > 1:
+                prediction = 1
+            elif prediction < 0:
+                prediction = 0
+            predictions[diag] = prediction
+
+        return predictions
+
     def test(self, filename):
         with open(filename) as f:
             for line in f:
                 feed_events = line.split("|")[2].split(" ")
-                actual = line.split("|")[0].split(",")
-                test_array = [0] * len(self._uniq_events)
-
                 feed_events = [w for w in feed_events if w not in self._stopwordslist]
-
-                te = len(feed_events)
-                for i, e in enumerate(feed_events):
-                    test_array[self._events_index.index(e)] += math.exp(self._decay*(i-te+1)/te)
-
+                actual = line.split("|")[0].split(",")
+                predictions = self.predict(feed_events)
                 for diag in self._diags:
-                    sim_array = self._sim_mat[diag]
-                    dot_product = sum([(x*y) for x, y in zip(test_array, sim_array)])
-                    prediction = (dot_product * 100) / self._size
-                    if prediction > 1:
-                        prediction = 1
-                    elif prediction < 0:
-                        prediction = 0
-
-                    self.stat_prediction(prediction, (diag in actual), diag, (diag in feed_events))
+                    self.stat_prediction(predictions[diag], (diag in actual), diag, None)
 
 
 if __name__ == '__main__':

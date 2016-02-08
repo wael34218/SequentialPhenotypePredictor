@@ -34,36 +34,39 @@ class CollaborativeFiltering(BinaryPredictor):
                     if e.startswith("d_"):
                         self._pat_diag[i][e] = 1
 
+    def predict(self, feed_events):
+        predictions = {}
+        vec = [0] * self._size
+        e_len = len(feed_events) * 1.0
+        for e in feed_events:
+            vec = [(x + y) / e_len for x, y in zip(self._model[e].tolist(), vec)]
+
+        sim = []
+        for e in self._pat_vec:
+            sim.append(sum([(x*y) for x, y in zip(e, vec)]))
+
+        avg_sim = sum(sim)/len(sim)
+        for diag in self._diags:
+            probability = 0
+            norm = 0
+            for i, pat_sim in enumerate(sim):
+                if diag in self._pat_diag[i]:
+                    probability += max(0, pat_sim - avg_sim)
+                norm += max(0, pat_sim - avg_sim)
+
+            predictions[diag] = probability * 1.0 / norm
+        return predictions
+
     def test(self, filename):
         with open(filename) as f:
             for line in f:
                 feed_events = line.split("|")[2].split(" ")
                 feed_events = [w for w in feed_events if w not in self._stopwordslist]
-                diags = line.split("|")[0].split(",")
-
-                vec = [0] * self._size
-                e_len = len(feed_events) * 1.0
-                for e in feed_events:
-                    vec = [(x + y) / e_len for x, y in zip(self._model[e].tolist(), vec)]
-
-                sim = []
-                for e in self._pat_vec:
-                    sim.append(sum([(x*y) for x, y in zip(e, vec)]))
-
-                avg_sim = sum(sim)/len(sim)
-                for d in self._diags:
-                    actual = int(d in diags)
-                    probability = 0
-                    norm = 0
-                    # norm = 0
-                    for i, pat_sim in enumerate(sim):
-                        if d in self._pat_diag[i]:
-                            probability += max(0, pat_sim - avg_sim)
-                        norm += max(0, pat_sim - avg_sim)
-
-                    prediction = probability * 1.0 / norm
-                    self.stat_prediction(prediction, actual, d)
-                    self.stat_prediction(prediction, actual, d, (d in feed_events))
+                actual = line.split("|")[0].split(",")
+                predictions = self.predict(feed_events)
+                for diag in self._diags:
+                    self.stat_prediction(predictions[diag], (diag in actual), diag,
+                                         (diag in feed_events))
 
 
 if __name__ == '__main__':

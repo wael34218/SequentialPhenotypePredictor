@@ -1,9 +1,11 @@
-from collections import defaultdict
 import argparse
 from binarypredictor import BinaryPredictor
+from skipgram import SkipGram
+from cbowsim import CbowSim
+from collaborative import CollaborativeFiltering
 
 
-class SkipGram(BinaryPredictor):
+class Ensemble(BinaryPredictor):
     def __init__(self, filename, window=10, size=600, decay=5, stopwords=0, threshold=0.5):
         self._window = window
         self._size = size
@@ -13,15 +15,25 @@ class SkipGram(BinaryPredictor):
         self._stopwordslist = []
         self._props = {"window": window, "size": size, "decay": decay, "stopwords": stopwords,
                        "threshold": threshold}
-        super(SkipGram, self).__init__(filename)
+        super(Ensemble, self).__init__(filename)
+
+        self.collaborative = CollaborativeFiltering(filename, window, size, decay, stopwords)
+        self.skipgram = SkipGram(filename, window, size, decay, stopwords)
+        self.cbowsim = CbowSim(filename, window, size, decay, stopwords)
 
     def train(self, filename):
-        self.base_train(filename, skipgram=1)
+        self.collaborative.train(filename)
+        self.cbowsim.train(filename)
+        self.skipgram.train(filename)
+        self._prior = self.cbowsim._prior
 
     def predict(self, feed_events):
-        predictions = defaultdict(
-            lambda: 1, {d: sim for d, sim in self._model.most_similar(
-                feed_events, topn=self._nevents)})
+        cf_preds = self.collaborative.predict(feed_events)
+        cbow_preds = self.cbowsim.predict(feed_events)
+        skip_preds = self.skipgram.predict(feed_events)
+        predictions = {}
+        for diag in self._diags:
+            predictions[diag] = cf_preds[diag] * cbow_preds[diag] * skip_preds[diag]
         return predictions
 
     def test(self, filename):
@@ -52,7 +64,7 @@ if __name__ == '__main__':
 
     train_files = []
     test_files = []
-    model = SkipGram('../Data/seq_combined/mimic_train_0',
+    model = Ensemble('../Data/seq_combined/mimic_train_0',
                      args.window, args.size, args.decay, args.stopwords, args.threshold)
 
     for i in range(10):
