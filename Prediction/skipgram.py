@@ -26,8 +26,7 @@ class SkipGram(BinaryPredictor):
 
     def test(self, filename):
         with open(filename) as f:
-            lines = f.readlines()
-            for line in lines:
+            for line in f:
                 feed_events = line.split("|")[2].split(" ")
                 feed_events = [w for w in feed_events if w not in self._stopwordslist]
                 actual = line.split("|")[0].split(",")
