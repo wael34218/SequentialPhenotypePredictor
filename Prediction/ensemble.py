@@ -1,4 +1,5 @@
 import argparse
+from collections import defaultdict
 from binarypredictor import BinaryPredictor
 from skipgram import SkipGram
 from cbowsim import CbowSim
@@ -20,12 +21,44 @@ class Ensemble(BinaryPredictor):
         self.collaborative = CollaborativeFiltering(filename, window, size, decay, stopwords)
         self.skipgram = SkipGram(filename, window, size, decay, stopwords)
         self.cbowsim = CbowSim(filename, window, size, decay, stopwords)
+        self._models = ["collaborative", "cbowsim", "skipgram"]
 
     def train(self, filename):
         self.collaborative.train(filename)
         self.cbowsim.train(filename)
         self.skipgram.train(filename)
         self._prior = self.cbowsim._prior
+        self._weights = {m: defaultdict(lambda: 0) for m in self._models}
+
+        with open(filename) as f:
+            for line in f:
+                feed_events = line.split("|")[2].split(" ")
+                feed_events = [w for w in feed_events if w not in self._stopwordslist]
+                actual = line.split("|")[0].split(",")
+
+                cf_preds = self.collaborative.predict(feed_events)
+                cbow_preds = self.cbowsim.predict(feed_events)
+                skip_preds = self.skipgram.predict(feed_events)
+
+                for diag in self._diags:
+                    if diag in actual:
+                        self._weights["collaborative"][diag] += cf_preds[diag]
+                        self._weights["cbowsim"][diag] += cbow_preds[diag]
+                        self._weights["skipgram"][diag] += skip_preds[diag]
+                    else:
+                        self._weights["collaborative"][diag] += 1 - cf_preds[diag]
+                        self._weights["cbowsim"][diag] += 1 - cbow_preds[diag]
+                        self._weights["skipgram"][diag] += 1 - skip_preds[diag]
+
+            # Normalize weights
+            for diag in self._diags:
+                norm = (self._weights["collaborative"][diag] + self._weights["cbowsim"][diag] +
+                        self._weights["skipgram"][diag])
+                self._weights["collaborative"][diag] /= norm
+                self._weights["cbowsim"][diag] /= norm
+                self._weights["skipgram"][diag] /= norm
+
+            print(self._weights)
 
     def predict(self, feed_events):
         cf_preds = self.collaborative.predict(feed_events)
@@ -33,7 +66,9 @@ class Ensemble(BinaryPredictor):
         skip_preds = self.skipgram.predict(feed_events)
         predictions = {}
         for diag in self._diags:
-            predictions[diag] = cf_preds[diag] * cbow_preds[diag] * skip_preds[diag]
+            predictions[diag] = cf_preds[diag] * self._weights["collaborative"][diag]
+            predictions[diag] += cbow_preds[diag] * self._weights["cbowsim"][diag]
+            predictions[diag] += skip_preds[diag] * self._weights["skipgram"][diag]
         return predictions
 
     def test(self, filename):
@@ -45,8 +80,7 @@ class Ensemble(BinaryPredictor):
                 actual = line.split("|")[0].split(",")
                 predictions = self.predict(feed_events)
                 for diag in self._diags:
-                    self.stat_prediction(predictions[diag], (diag in actual), diag,
-                                         (diag in feed_events))
+                    self.stat_prediction(predictions[diag], (diag in actual), diag, None)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SkipGram Similarity')
