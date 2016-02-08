@@ -55,7 +55,8 @@ class CbowSim(BinaryPredictor):
                 actual = line.split("|")[0].split(",")
                 predictions = self.predict(feed_events)
                 for diag in self._diags:
-                    self.stat_prediction(predictions[diag], (diag in actual), diag, None)
+                    self.stat_prediction(predictions[diag], (diag in actual), diag,
+                                         (diag in feed_events))
 
 
 if __name__ == '__main__':
