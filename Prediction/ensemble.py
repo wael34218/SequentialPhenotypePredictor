@@ -7,7 +7,8 @@ from collaborative import CollaborativeFiltering
 
 
 class Ensemble(BinaryPredictor):
-    def __init__(self, filename, window=10, size=600, decay=5, stopwords=0, threshold=0.5):
+    def __init__(self, filename, window=10, size=600, decay=5, stopwords=0, threshold=0.5,
+                 balanced=False):
         self._window = window
         self._size = size
         self._decay = decay
@@ -15,7 +16,7 @@ class Ensemble(BinaryPredictor):
         self._threshold = threshold
         self._stopwordslist = []
         self._props = {"window": window, "size": size, "decay": decay, "stopwords": stopwords,
-                       "threshold": threshold}
+                       "threshold": threshold, "balanced": balanced}
         super(Ensemble, self).__init__(filename)
 
         self.collaborative = CollaborativeFiltering(filename, window, size, decay, stopwords)
@@ -94,16 +95,22 @@ if __name__ == '__main__':
                         help='Set number of stop words (default: 0)')
     parser.add_argument('-t', '--threshold', action="store", default=0.2, type=float,
                         help='Threshold for prediction probability (default: 0.2)')
+    parser.add_argument('-b', '--balanced', action="store", default=False, type=bool,
+                        help='Whether to use balanced or not blanaced datasets')
     args = parser.parse_args()
 
     train_files = []
     test_files = []
-    model = Ensemble('../Data/seq_combined/mimic_train_0',
-                     args.window, args.size, args.decay, args.stopwords, args.threshold)
+    data_path = "../Data/seq_combined/"
+    if args.balanced:
+        data_path = "../Data/seq_combined_balanced/"
+
+    model = Ensemble(data_path + '/mimic_train_0', args.window, args.size, args.decay,
+                     args.stopwords, args.threshold, args.balanced)
 
     for i in range(10):
-        train_files.append('../Data/seq_combined/mimic_train_'+str(i))
-        test_files.append('../Data/seq_combined/mimic_test_'+str(i))
+        train_files.append(data_path + 'mimic_train_'+str(i))
+        test_files.append(data_path + 'mimic_test_'+str(i))
 
     model.cross_validate(train_files, test_files)
     model.report_accuracy()

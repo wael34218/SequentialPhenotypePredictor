@@ -80,7 +80,7 @@ w2v_size = 200
 w2v_window = 60
 
 # TODO: allow passed in parameters and redo model for each train set
-with open('../Data/seq_combined/mimic_train_me_0') as f:
+with open('../Data/seq_combined/mimic_train_0') as f:
     sentences = [s[:-1].replace(",", "").split(' ') for s in f.readlines()]
     w2v = gensim.models.Word2Vec(sentences, sg=0, window=w2v_window, size=w2v_size,
                                  min_count=1, workers=20)

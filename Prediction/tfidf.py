@@ -8,8 +8,8 @@ import itertools
 
 class TFIDF(BinaryPredictor):
 
-    def __init__(self, filename, ngrams=3, skip=3, decay=0, stopwords=0,
-                 threshold=0, balanced=False):
+    def __init__(self, filename, ngrams=3, skip=3, decay=0, stopwords=0, threshold=0,
+                 balanced=False):
         self._ngrams = ngrams
         self._skip = skip
         self._decay = decay
@@ -18,7 +18,8 @@ class TFIDF(BinaryPredictor):
         # Stopwords are not actually calculated - added to comply with the same interface as other
         # predictors
         self._stopwordslist = []
-        self._props = {"ngrams": ngrams, "decay": decay, "skip": skip, "stopwords": stopwords}
+        self._props = {"ngrams": ngrams, "decay": decay, "skip": skip, "stopwords": stopwords,
+                       "threshold": threshold, "balanced": balanced}
         super(TFIDF, self).__init__(filename)
 
     def _generate_grams(self, sequence):
@@ -124,16 +125,23 @@ if __name__ == '__main__':
                         help='Set number of stop words (default: 0)')
     parser.add_argument('-t', '--threshold', action="store", default=0.0, type=float,
                         help='Decay (default: 0.0)')
+    parser.add_argument('-b', '--balanced', action="store", default=False, type=bool,
+                        help='Whether to use balanced or not blanaced datasets')
     args = parser.parse_args()
 
     train_files = []
     test_files = []
-    model = TFIDF('../Data/seq_combined/mimic_train_0',
-                  args.ngrams, args.skip, args.decay, args.stopwords, args.threshold)
+
+    data_path = "../Data/seq_combined/"
+    if args.balanced:
+        data_path = "../Data/seq_combined_balanced/"
+
+    model = TFIDF(data_path + 'mimic_train_0', args.window, args.size, args.decay,
+                  args.stopwords, args.threshold, args.balanced)
 
     for i in range(10):
-        train_files.append('../Data/seq_combined/mimic_train_'+str(i))
-        test_files.append('../Data/seq_combined/mimic_test_'+str(i))
+        train_files.append(data_path + 'mimic_train_'+str(i))
+        test_files.append(data_path + 'mimic_test_'+str(i))
 
     model.cross_validate(train_files, test_files)
     model.report_accuracy()
