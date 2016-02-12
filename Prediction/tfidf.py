@@ -136,7 +136,7 @@ if __name__ == '__main__':
     if args.balanced:
         data_path = "../Data/seq_combined_balanced/"
 
-    model = TFIDF(data_path + 'mimic_train_0', args.window, args.size, args.decay,
+    model = TFIDF(data_path + 'mimic_train_0', args.ngrams, args.skip, args.decay,
                   args.stopwords, args.threshold, args.balanced)
 
     for i in range(10):
