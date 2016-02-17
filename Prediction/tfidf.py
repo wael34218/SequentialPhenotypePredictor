@@ -18,8 +18,9 @@ class TFIDF(BinaryPredictor):
         # Stopwords are not actually calculated - added to comply with the same interface as other
         # predictors
         self._stopwordslist = []
+        self._cutoff = 2 * (skip + ngrams)
         self._props = {"ngrams": ngrams, "decay": decay, "skip": skip, "stopwords": stopwords,
-                       "threshold": threshold, "balanced": balanced}
+                       "threshold": threshold, "balanced": balanced, "cutoff": self._cutoff}
         super(TFIDF, self).__init__(filename)
 
     def _generate_grams(self, sequence):
@@ -45,10 +46,13 @@ class TFIDF(BinaryPredictor):
     def train(self, filename):
         print("training", filename)
         self._ldiagp = {}
+        self._lndiagp = {}
         self._ldiagtermp = {}
+        self._lndiagtermp = {}
         self._lidf = defaultdict(lambda: 0)
         self._termc = defaultdict(lambda: 0)
         diagtermc = {d: defaultdict(lambda: 1) for d in self._diags}
+        ndiagtermc = {d: defaultdict(lambda: 1) for d in self._diags}
         diagc = defaultdict(lambda: 0)
         total_count = 0
 
@@ -63,15 +67,18 @@ class TFIDF(BinaryPredictor):
                 total_count += 1
                 events = s.split("|")[2].split(" ")
                 diags = s.split("|")[0].split(",")
-                terms = self._generate_grams(events)
-
-                for t, c in terms:
-                    terme[t] += 1
+                terms = self._generate_grams(events[:self._cutoff])
 
                 for d in diags:
                     diagc[d] += 1
-                    for t, c in terms:
-                        diagtermc[d][t] += c
+
+                for t, c in terms:
+                    terme[t] += 1
+                    for d in self._diags:
+                        if d in diags:
+                            diagtermc[d][t] += c
+                        else:
+                            ndiagtermc[d][t] += c
 
                 # for prior probability calculation
                 prev_diags = [e for e in s.split("|")[2].split(" ") if e.startswith("d_")]
@@ -83,26 +90,34 @@ class TFIDF(BinaryPredictor):
         for d in self._diags:
             self._prior[d] = diag_joined[d] * 1.0 / diag_totals[d]
             termsc = sum(diagtermc[d].values())
+            ntermsc = sum(ndiagtermc[d].values())
             self._ldiagtermp[d] = defaultdict(
                 lambda: 0, {t: math.log((v * 1.0) / termsc) for t, v in diagtermc[d].items()})
+            self._lndiagtermp[d] = defaultdict(
+                lambda: 0, {t: math.log((v * 1.0) / ntermsc) for t, v in ndiagtermc[d].items()})
             self._ldiagp[d] = math.log(diagc[d] * 1.0 / total_count)
+            self._lndiagp[d] = math.log((total_count - diagc[d] * 1.0) / total_count)
 
         for t in terme:
             self._lidf[t] = math.log(total_count * 1.0 / terme[t])
 
     def predict(self, feed_events):
         predictions = {}
-        terms = self._generate_grams(feed_events)
+        terms = self._generate_grams(feed_events[:self._cutoff])
 
         for diag in self._diags:
             score = self._ldiagp[diag]
+            nscore = self._lndiagp[diag]
             for t, c in terms:
                 score += c * self._lidf[t] * self._ldiagtermp[diag][t]
-            predictions[diag] = score
+                nscore += c * self._lidf[t] * self._lndiagtermp[diag][t]
+
+            predictions[diag] = abs(nscore) / abs(nscore + score)
 
         return predictions
 
     def test(self, filename):
+        print("testing", filename)
         with open(filename) as f:
             for line in f:
                 feed_events = line.split("|")[2].split(" ")
