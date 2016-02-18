@@ -39,7 +39,7 @@ class CbowSim(BinaryPredictor):
         for diag in self._diags:
             sim_array = self._sim_mat[diag]
             dot_product = sum([(x*y) for x, y in zip(test_array, sim_array)])
-            prediction = (dot_product * 100) / self._size
+            prediction = dot_product / len(feed_events)
             if prediction > 1:
                 prediction = 1
             elif prediction < 0:
