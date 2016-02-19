@@ -11,10 +11,9 @@ class CbowSim(BinaryPredictor):
         self._size = size
         self._decay = decay
         self._stopwords = stopwords
-        self._threshold = threshold
         self._stopwordslist = []
         self._props = {"window": window, "size": size, "decay": decay, "stopwords": stopwords,
-                       "threshold": threshold, "balanced": balanced}
+                       "balanced": balanced}
         super(CbowSim, self).__init__(filename)
 
     def train(self, filename):
@@ -70,8 +69,6 @@ if __name__ == '__main__':
                         help='Set exponential decay through time (default: 5)')
     parser.add_argument('-sw', '--stopwords', action="store", default=0, type=int,
                         help='Set number of stop words (default: 0)')
-    parser.add_argument('-t', '--threshold', action="store", default=0.2, type=float,
-                        help='Threshold for prediction probability (default: 0.2)')
     parser.add_argument('-b', '--balanced', action="store", default=False, type=bool,
                         help='Whether to use balanced or not blanaced datasets')
     args = parser.parse_args()
@@ -83,7 +80,7 @@ if __name__ == '__main__':
         data_path = "../Data/seq_combined_balanced/"
 
     model = CbowSim(data_path + 'mimic_train_0', args.window, args.size, args.decay,
-                    args.stopwords, args.threshold, args.balanced)
+                    args.stopwords, args.balanced)
 
     for i in range(10):
         train_files.append(data_path + 'mimic_train_'+str(i))

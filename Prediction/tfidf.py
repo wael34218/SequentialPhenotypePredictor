@@ -8,19 +8,17 @@ import itertools
 
 class TFIDF(BinaryPredictor):
 
-    def __init__(self, filename, ngrams=3, skip=3, decay=0, stopwords=0, threshold=0,
-                 balanced=False):
+    def __init__(self, filename, ngrams=3, skip=3, decay=0, stopwords=0, balanced=False):
         self._ngrams = ngrams
         self._skip = skip
         self._decay = decay
         self._stopwords = stopwords
-        self._threshold = threshold
         # Stopwords are not actually calculated - added to comply with the same interface as other
         # predictors
         self._stopwordslist = []
         self._cutoff = 2 * (skip + ngrams)
         self._props = {"ngrams": ngrams, "decay": decay, "skip": skip, "stopwords": stopwords,
-                       "threshold": threshold, "balanced": balanced, "cutoff": self._cutoff}
+                       "balanced": balanced, "cutoff": self._cutoff}
         super(TFIDF, self).__init__(filename)
 
     def _generate_grams(self, sequence):
@@ -138,8 +136,6 @@ if __name__ == '__main__':
                         help='decay (default: 0.0)')
     parser.add_argument('-sw', '--stopwords', action="store", default=0, type=int,
                         help='Set number of stop words (default: 0)')
-    parser.add_argument('-t', '--threshold', action="store", default=0.0, type=float,
-                        help='Decay (default: 0.0)')
     parser.add_argument('-b', '--balanced', action="store", default=False, type=bool,
                         help='Whether to use balanced or not blanaced datasets')
     args = parser.parse_args()
@@ -152,7 +148,7 @@ if __name__ == '__main__':
         data_path = "../Data/seq_combined_balanced/"
 
     model = TFIDF(data_path + 'mimic_train_0', args.ngrams, args.skip, args.decay,
-                  args.stopwords, args.threshold, args.balanced)
+                  args.stopwords, args.balanced)
 
     for i in range(10):
         train_files.append(data_path + 'mimic_train_'+str(i))
