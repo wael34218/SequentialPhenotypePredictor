@@ -1,4 +1,5 @@
 import argparse
+import math
 from binarypredictor import BinaryPredictor
 
 
@@ -38,9 +39,10 @@ class CollaborativeFiltering(BinaryPredictor):
     def predict(self, feed_events):
         predictions = {}
         vec = [0] * self._size
-        e_len = len(feed_events) * 1.0
-        for e in feed_events:
-            vec = [(x + y) / e_len for x, y in zip(self._model[e].tolist(), vec)]
+        te = len(feed_events) * 1.0
+        for i, e in enumerate(feed_events):
+            dec = math.exp(self._decay*(i-te+1)/te)
+            vec = [(x + y) * dec / te for x, y in zip(self._model[e].tolist(), vec)]
 
         sim = []
         for e in self._pat_vec:
@@ -101,6 +103,5 @@ if __name__ == '__main__':
         test_files.append(data_path + 'mimic_test_'+str(i))
 
     model.cross_validate(train_files, test_files)
-    model.report_accuracy()
-    print(model.accuracy)
     model.write_stats()
+    print(model.accuracy)

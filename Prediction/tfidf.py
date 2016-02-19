@@ -159,6 +159,5 @@ if __name__ == '__main__':
         test_files.append(data_path + 'mimic_test_'+str(i))
 
     model.cross_validate(train_files, test_files)
-    model.report_accuracy()
-    print(model.accuracy)
     model.write_stats()
+    print(model.accuracy)

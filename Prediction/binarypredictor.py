@@ -10,6 +10,9 @@ import json
 from collections import defaultdict
 import gensim
 import operator
+import matplotlib.pyplot as plt
+import warnings
+warnings.filterwarnings("error")
 
 
 class BinaryPredictor(object):
@@ -119,29 +122,9 @@ class BinaryPredictor(object):
     def stat_prediction(self, prediction, actual, diag, prior=None):
         if prior is not None:
             prediction *= abs((self._prior[diag] - int(not prior)))
-        prob = (prediction > self._threshold)
-        true_condition = (actual == 1)
-
-        if prob:
-            self._total_predictions += 1
 
         self._true_vals[diag].append(actual)
         self._pred_vals[diag].append(prediction)
-
-        if prob is True and true_condition is True:
-            self._stats[diag]["TP"] += 1
-            self._hit += 1
-        elif prob is False and true_condition is True:
-            self._miss += 1
-            self._stats[diag]["FN"] += 1
-        elif prob is True and true_condition is False:
-            self._miss += 1
-            self._stats[diag]["FP"] += 1
-        elif prob is False and true_condition is False:
-            self._hit += 1
-            self._stats[diag]["TN"] += 1
-        else:
-            assert False, "This shouldnt happen"
 
     def cross_validate(self, train_files, test_files):
         self._reset_stats()
@@ -158,14 +141,74 @@ class BinaryPredictor(object):
         return (1.0 * self._hit / (self._miss + self._hit))
 
     @property
-    def csv_name(self):
+    def name(self):
         fname = self.__class__.__name__
         for k in sorted(self._props):
             fname += "_" + k[:2] + str(self._props[k])
-        fname += ".csv"
         return fname
 
-    def report_accuracy(self):
+    def _calculate_stats(self):
+        self._diag_thresholds = {}
+        self._diag_f1_scores = {}
+        for d in self._diags:
+            precision, recall, thresholds = metrics.precision_recall_curve(
+                self._true_vals[d], self._pred_vals[d])
+            max_f1_score = 0
+            for i in range(len(precision)):
+                if precision[i] == 0 or recall[i] == 0:
+                    f1_score = 0
+                else:
+                    f1_score = 2 * precision[i] * recall[i] / (precision[i] + recall[i])
+
+                if f1_score > max_f1_score:
+                    max_f1_score = f1_score
+                    self._diag_thresholds[d] = thresholds[i]
+                    self._diag_f1_scores[d] = f1_score
+
+            for i in range(len(self._true_vals[d])):
+                prob = bool(self._pred_vals[d][i] >= self._diag_thresholds[d])
+                true_condition = self._true_vals[d][i]
+                if prob:
+                    self._total_predictions += 1
+
+                if prob is True and true_condition is True:
+                    self._stats[d]["TP"] += 1
+                    self._hit += 1
+                elif prob is False and true_condition is True:
+                    self._miss += 1
+                    self._stats[d]["FN"] += 1
+                elif prob is True and true_condition is False:
+                    self._miss += 1
+                    self._stats[d]["FP"] += 1
+                elif prob is False and true_condition is False:
+                    self._hit += 1
+                    self._stats[d]["TN"] += 1
+                else:
+                    assert False, "This shouldnt happen"
+
+    def plot_roc(self):
+        fpr = dict()
+        tpr = dict()
+        roc_auc = dict()
+        for d in self._diags:
+            fpr[d], tpr[d], _ = metrics.roc_curve(self._true_vals[d], self._pred_vals[d])
+            roc_auc[d] = metrics.auc(fpr[d], tpr[d])
+
+        plt.figure(figsize=(12, 12), dpi=120)
+        for d in ["d_244", "d_250", "d_274", "d_327", "d_403", "d_427", "d_428", "d_585", "d_774"]:
+            plt.plot(fpr[d], tpr[d], label='{0} (area = {1:0.3f})'
+                     .format(self._diag_to_desc[d], roc_auc[d]))
+
+        plt.plot([0, 1], [0, 1], 'k--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('Receiver operating characteristic example')
+        plt.legend(loc="lower right", fontsize=12)
+        plt.savefig('../Results/Plots/' + self.name + '.png')
+
+    def _report_accuracy(self):
         with open('../Results/accuracies.csv', 'a') as csvfile:
             writer = csv.writer(csvfile)
             props = {k: self._props[k] for k in self._props}
@@ -181,11 +224,13 @@ class BinaryPredictor(object):
                              self.prediction_per_patient, top_auc, top_diag])
 
     def write_stats(self):
-        with open('../Results/Stats/' + self.csv_name, 'w') as csvfile:
+        self._calculate_stats()
+        self._report_accuracy()
+        with open('../Results/Stats/' + self.name + '.csv', 'w') as csvfile:
             writer = csv.writer(csvfile)
-            header = ["Diagnosis", "Description", "AUC", "F-Score", "Specificity", "Sensitivity",
-                      "Accuracy", "True Positives", "True Negatives", "False Positives",
-                      "False Negatives"]
+            header = ["Diagnosis", "Description", "AUC", "F-Score", "Threshold", "Specificity",
+                      "Sensitivity", "Accuracy", "True Positives", "True Negatives",
+                      "False Positives", "False Negatives"]
             writer.writerow(header)
             for d in sorted(self._diags):
                 row = []
@@ -193,6 +238,7 @@ class BinaryPredictor(object):
                 row.append(self._diag_to_desc[d])
                 row.append(self._d_auc(d))
                 row.append(self._d_fscore(d))
+                row.append(self._diag_thresholds[d])
                 row.append(self._d_specificity(d))
                 row.append(self._d_sensitivity(d))
                 row.append(self._d_accuracy(d))
