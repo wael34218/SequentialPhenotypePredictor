@@ -26,13 +26,14 @@ class CollaborativeFiltering(BinaryPredictor):
                 vec = [0] * self._size
 
                 events = line.split("|")[2].split(" ")
-                for e in events:
-                    vec = [x + y for x, y in zip(self._model[e].tolist(), vec)]
+                te = len(events) * 1.0
+                for i, e in enumerate(events):
+                    dec = math.exp(self._decay*(i-te+1)/te)
+                    vec = [(x + y) * dec / te for x, y in zip(self._model[e].tolist(), vec)]
                 self._pat_vec.append([e * 1.0 / len(events) for e in vec])
 
-                for e in line.split("|")[3].replace("\n", "").split(" "):
-                    if e.startswith("d_"):
-                        self._pat_diag[i][e] = 1
+                for d in line.split("|")[0].split(","):
+                    self._pat_diag[i][d] = 1
 
     def predict(self, feed_events):
         predictions = {}
@@ -43,19 +44,22 @@ class CollaborativeFiltering(BinaryPredictor):
             vec = [(x + y) * dec / te for x, y in zip(self._model[e].tolist(), vec)]
 
         sim = []
+        sum_test = math.sqrt(sum([x**2 for x in vec]))
         for e in self._pat_vec:
-            sim.append(sum([(x*y) for x, y in zip(e, vec)]))
+            dot = sum([(x*y) for x, y in zip(e, vec)])
+            sum_pat_vec = math.sqrt(sum([x**2 for x in e]))
+            sim.append(dot/(sum_test + sum_pat_vec))
 
-        avg_sim = sum(sim)/len(sim)
+        top_5 = sorted(sim)[5:]
+        indexes = [sim.index(i) for i in top_5]
+
         for diag in self._diags:
             probability = 0
-            norm = 0
-            for i, pat_sim in enumerate(sim):
+            for i in indexes:
                 if diag in self._pat_diag[i]:
-                    probability += max(0, pat_sim - avg_sim)
-                norm += max(0, pat_sim - avg_sim)
+                    probability += sim[i]
 
-            predictions[diag] = probability * 1.0 / norm
+            predictions[diag] = probability * 1.0 / 5
         return predictions
 
     def test(self, filename):

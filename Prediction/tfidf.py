@@ -13,6 +13,7 @@ class TFIDF(BinaryPredictor):
         self._skip = skip
         self._decay = decay
         self._stopwords = stopwords
+        self._balanced = balanced
         # Stopwords are not actually calculated - added to comply with the same interface as other
         # predictors
         self._stopwordslist = []
