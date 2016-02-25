@@ -8,17 +8,17 @@ import itertools
 
 class TFIDF(BinaryPredictor):
 
-    def __init__(self, filename, ngrams=3, skip=3, decay=0, stopwords=0, balanced=False):
+    def __init__(self, filename, ngrams=3, skip=3, decay=0, balanced=False, prior=True):
         self._ngrams = ngrams
         self._skip = skip
         self._decay = decay
-        self._stopwords = stopwords
+        self._prior_pred = prior
         self._balanced = balanced
         # Stopwords are not actually calculated - added to comply with the same interface as other
         # predictors
         self._stopwordslist = []
         self._cutoff = 2 * (skip + ngrams)
-        self._props = {"ngrams": ngrams, "decay": decay, "skip": skip, "stopwords": stopwords,
+        self._props = {"ngrams": ngrams, "decay": decay, "skip": skip, "prior": prior,
                        "balanced": balanced, "cutoff": self._cutoff}
         super(TFIDF, self).__init__(filename)
 
@@ -115,18 +115,6 @@ class TFIDF(BinaryPredictor):
 
         return predictions
 
-    def test(self, filename):
-        print("testing", filename)
-        with open(filename) as f:
-            for line in f:
-                feed_events = line.split("|")[2].split(" ")
-                feed_events = [w for w in feed_events if w not in self._stopwordslist]
-                actual = line.split("|")[0].split(",")
-                predictions = self.predict(feed_events)
-                for diag in self._diags:
-                    self.stat_prediction(predictions[diag], (diag in actual), diag,
-                                         (diag in feed_events))
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='TFIDF')
     parser.add_argument('-n', '--ngrams', action="store", default=3, type=int,
@@ -135,10 +123,10 @@ if __name__ == '__main__':
                         help='Skipgram (default: 3)')
     parser.add_argument('-d', '--decay', action="store", default=0.0, type=float,
                         help='decay (default: 0.0)')
-    parser.add_argument('-sw', '--stopwords', action="store", default=0, type=int,
-                        help='Set number of stop words (default: 0)')
-    parser.add_argument('-b', '--balanced', action="store", default=False, type=bool,
-                        help='Whether to use balanced or not blanaced datasets')
+    parser.add_argument('-p', '--prior', action="store", default=1, type=int,
+                        help='Add prior probability (0 for False, 1 for True) default 1')
+    parser.add_argument('-b', '--balanced', action="store", default=0, type=int,
+                        help='Whether to use balanced or not blanaced datasets (0 or 1) default 0')
     args = parser.parse_args()
 
     train_files = []
@@ -148,8 +136,9 @@ if __name__ == '__main__':
     if args.balanced:
         data_path = "../Data/seq_combined_balanced/"
 
-    model = TFIDF(data_path + 'mimic_train_0', args.ngrams, args.skip, args.decay,
-                  args.stopwords, args.balanced)
+    prior = False if args.prior == 0 else True
+    bal = False if args.balanced == 0 else True
+    model = TFIDF(data_path + 'mimic_train_0', args.ngrams, args.skip, args.decay, bal, prior)
 
     for i in range(10):
         train_files.append(data_path + 'mimic_train_'+str(i))

@@ -94,11 +94,19 @@ class BinaryPredictor(object):
         for d in diag_totals:
             self._prior[d] = diag_joined[d] * 1.0 / diag_totals[d]
 
-        if self._stopwords != 0:
-            sentences = self._remove_stopwords(sentences)
-
-        self._model = gensim.models.Word2Vec(sentences, sg=skipgram, window=self._window,
+        self._model = gensim.models.Word2Vec(sentences, sg=skipgram, window=self._window, iter=5,
                                              size=self._size, min_count=1, workers=20)
+
+    def test(self, filename):
+        with open(filename) as f:
+            for line in f:
+                feed_events = line.split("|")[2].split(" ")
+                feed_events = [w for w in feed_events if w not in self._stopwordslist]
+                actual = line.split("|")[0].split(",")
+                predictions = self.predict(feed_events)
+                for diag in self._diags:
+                    prior = (diag in feed_events) if self._prior_pred else None
+                    self.stat_prediction(predictions[diag], (diag in actual), diag, prior)
 
     def _remove_stopwords(self, sentences):
         '''
@@ -195,18 +203,18 @@ class BinaryPredictor(object):
             roc_auc[d] = metrics.auc(fpr[d], tpr[d])
 
         plt.figure(figsize=(12, 12), dpi=120)
-        for d in ["d_244", "d_250", "d_274", "d_327", "d_403", "d_427", "d_428", "d_585", "d_774"]:
+        for d in ["d_250", "d_274", "d_327", "d_285.9", "d_427", "d_428", "d_585"]:
             plt.plot(fpr[d], tpr[d], label='{0} (area = {1:0.3f})'
                      .format(self._diag_to_desc[d], roc_auc[d]))
 
         plt.plot([0, 1], [0, 1], 'k--')
         plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
+        plt.ylim([0.0, 1.0])
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
         plt.title('Receiver operating characteristic example')
         plt.legend(loc="lower right", fontsize=12)
-        plt.savefig('../Results/Plots/' + self.name + '.png')
+        plt.savefig('../Results/Plots/ROC_' + self.name + '.png')
 
     def _report_accuracy(self):
         with open('../Results/accuracies.csv', 'a') as csvfile:

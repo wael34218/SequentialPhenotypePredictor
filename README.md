@@ -5,8 +5,7 @@
 
 This project assumes that you already have access to some MIMICIII database. If not you could follow the following instructions:
 
-https://mimic.physionet.org/tutorials/install_mimic_locally/
-
+https://mimic.physionet.org/tutorials/install-mimic-locally-ubuntu/
 
 ## Installation
 
