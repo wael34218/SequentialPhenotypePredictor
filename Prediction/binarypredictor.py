@@ -101,7 +101,7 @@ class BinaryPredictor(object):
         with open(filename) as f:
             for line in f:
                 feed_events = line.split("|")[2].split(" ")
-                feed_events = [w for w in feed_events if w not in self._stopwordslist]
+                # feed_events = [w for w in feed_events if w not in self._stopwordslist]
                 actual = line.split("|")[0].split(",")
                 predictions = self.predict(feed_events)
                 for diag in self._diags:
@@ -176,6 +176,7 @@ class BinaryPredictor(object):
             for i in range(len(self._true_vals[d])):
                 prob = bool(self._pred_vals[d][i] >= self._diag_thresholds[d])
                 true_condition = self._true_vals[d][i]
+
                 if prob:
                     self._total_predictions += 1
 

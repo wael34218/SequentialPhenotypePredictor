@@ -15,6 +15,7 @@ class SkipGram(BinaryPredictor):
         super(SkipGram, self).__init__(filename)
 
     def train(self, filename):
+        print(filename)
         self.base_train(filename, skipgram=1)
 
     def predict(self, feed_events):
