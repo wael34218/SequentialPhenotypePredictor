@@ -20,7 +20,7 @@ class Ensemble(BinaryPredictor):
         self.collaborative = {}
         self.skipgram = {}
         self.cbowsim = {}
-        self.collaborative = CollaborativeFiltering(filename, 27, 400, decay, balanced, True)
+        self.collaborative = CollaborativeFiltering(filename, 27, 300, decay, balanced, True)
         self.cbowsim = CbowSim(filename, 45, 275, decay, balanced, True)
         self.skipgram = SkipGram(filename, 23, 350, decay, balanced, False)
         self._models = ["collaborative", "cbowsim", "skipgram"]
@@ -46,10 +46,10 @@ class Ensemble(BinaryPredictor):
                         self._weights["collaborative"][diag] += cf_preds[diag]
                         self._weights["cbowsim"][diag] += cbow_preds[diag]
                         self._weights["skipgram"][diag] += skip_preds[diag]
-                    #else:
-                    #    self._weights["collaborative"][diag] += 1 - cf_preds[self.dd[diag]][diag]
-                    #    self._weights["cbowsim"][diag] += 1 - cbow_preds[self.dd[diag]][diag]
-                    #    self._weights["skipgram"][diag] += 1 - skip_preds[self.dd[diag]][diag]
+                    else:
+                        self._weights["collaborative"][diag] += 1 - cf_preds[self.dd[diag]][diag]
+                        self._weights["cbowsim"][diag] += 1 - cbow_preds[self.dd[diag]][diag]
+                        self._weights["skipgram"][diag] += 1 - skip_preds[self.dd[diag]][diag]
 
             # Normalize weights
             for diag in self._diags:
@@ -101,6 +101,6 @@ if __name__ == '__main__':
         test_files.append(data_path + 'mimic_test_'+str(i))
 
     model.cross_validate(train_files, test_files)
-    model.report_accuracy()
     model.write_stats()
     print(model.accuracy)
+    model.plot_roc()
