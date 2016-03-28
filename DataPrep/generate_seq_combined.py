@@ -9,6 +9,7 @@ uniq_p_feat = ["gender", "age", "white", "asian", "hispanic", "black", "multi", 
 
 
 def set_p_features(hadm_id):
+    return "None"
     cur.execute("""SELECT dob, admittime, gender, ethnicity from admissions join patients
                 on admissions.subject_id = patients.subject_id
                 where hadm_id = %(hadm_id)s """ % {'hadm_id': str(hadm_id)})
@@ -106,20 +107,25 @@ print("Number of total sequences {}".format(len(all_seq)))
 print("Data structures created. Now writing files:")
 train = {}
 test = {}
+valid = {}
+trainv = {}
 
 # To include all diagnoses change it to total_diags
 for i in range(10):
     train[str(i)] = open('../Data/seq_combined/mimic_train_'+str(i), 'w')
+    trainv[str(i)] = open('../Data/seq_combined/mimic_trainv_'+str(i), 'w')
     test[str(i)] = open('../Data/seq_combined/mimic_test_'+str(i), 'w')
-
+    valid[str(i)] = open('../Data/seq_combined/mimic_valid_'+str(i), 'w')
 
 segment = 0
 random.shuffle(all_seq)
 total = len(all_seq)
 
+valid_count = 0
 for seq_index, seq in enumerate(all_seq):
     if math.floor(seq_index * 10 / total) > segment:
         print("New Segment "+str(segment))
+        valid_count = 0
         segment += 1
 
     [patient, events, final_events, diagnoses] = seq
@@ -131,10 +137,16 @@ for seq_index, seq in enumerate(all_seq):
     test[str(segment)].write(serial+'\n')
     for f in range(10):
         if f != segment:
-            train[str(f)].write(serial+'\n')
+            trainv[str(f)].write(serial+'\n')
+            if valid_count < math.floor(total / 10):
+                valid[str(f)].write(serial+'\n')
+                valid_count += 1
+            else:
+                train[str(f)].write(serial+'\n')
 
 for i in range(10):
     train[str(i)].close()
     test[str(i)].close()
+    valid[str(i)].close()
 
 print("Done")

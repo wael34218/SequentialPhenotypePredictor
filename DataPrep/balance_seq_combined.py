@@ -8,7 +8,7 @@ raw_dir = "../Data/seq_combined/"
 balanced_raw_dir = "../Data/seq_combined_balanced/"
 
 files = [f for f in os.listdir("../Data/seq_combined/")
-         if path.isfile(path.join(raw_dir, f)) and not f.startswith(".")]
+         if path.isfile(path.join(raw_dir, f)) and not f.startswith(".") and "test" not in f]
 
 for f in files:
     total = 0

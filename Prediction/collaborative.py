@@ -116,13 +116,16 @@ if __name__ == '__main__':
     bal = False if args.balanced == 0 else True
     model = CollaborativeFiltering(data_path + 'mimic_train_0', args.window, args.size, args.decay,
                                    bal, prior)
-    train_files = []
-    test_files = []
 
+    train_files = []
+    valid_files = []
+    test_files = []
     for i in range(10):
         train_files.append(data_path + 'mimic_train_'+str(i))
         test_files.append(data_path + 'mimic_test_'+str(i))
+        valid_files.append(data_path + 'mimic_valid_'+str(i))
 
-    model.cross_validate(train_files, test_files)
+    model.cross_validate(train_files, valid_files)
     model.write_stats()
     print(model.accuracy)
+    model.test(test_files)

@@ -1,4 +1,5 @@
 from collections import defaultdict
+import math
 import argparse
 from binarypredictor import BinaryPredictor
 
@@ -19,21 +20,27 @@ class SkipGram(BinaryPredictor):
         self.base_train(filename, skipgram=1)
 
     def predict(self, feed_events):
+        te = len(feed_events)
+        weighted_events = [(e,  math.exp(self._decay*(i-te+1)/te))
+                           for i, e in enumerate(feed_events)]
         predictions = defaultdict(
             lambda: 1, {d: sim * (sim > 0) for d, sim in self._model.most_similar(
-                feed_events, topn=self._nevents)})
+                weighted_events, topn=self._nevents)})
         return predictions
 
-#    def word_vector_graph(self, filename):
+#    def word_vector_graph(self):
 #        from matplotlib import pyplot as plt
 #        fig = plt.figure(figsize=(14, 14), dpi=180)
+#        colors = {"d": "black", "p": "blue", "l": "red"}
 #        plt.plot()
 #        ax = fig.add_subplot(111)
 #        for e in self._uniq_events:
+#            if e in ["d_774", "p_AMPVL", "p_NEOSYRD5W", "p_GENT10I"]:
+#                continue
 #            v = self._model[e]
 #            plt.plot(v[0], v[1])
-#            ax.annotate(e, xy=v, fontsize=10)
-#        plt.savefig('../Results/Plots/event_rep.png')
+#            ax.annotate(e, xy=v, fontsize=10, color=colors[e[0]])
+#        plt.savefig('../Results/Plots/event_rep_colored.png')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SkipGram Similarity')
@@ -49,22 +56,22 @@ if __name__ == '__main__':
                         help='Whether to use balanced or not blanaced datasets (0 or 1) default 0')
     args = parser.parse_args()
 
-    train_files = []
-    test_files = []
-
-    data_path = "../Data/seq_combined/"
+    data_path = "../Data/seq_combined_legacy/"
     if args.balanced:
-        data_path = "../Data/seq_combined_balanced/"
+        data_path = "../Data/seq_combined_balanced_legacy/"
 
     prior = False if args.prior == 0 else True
     bal = False if args.balanced == 0 else True
     model = SkipGram(data_path + 'mimic_train_0', args.window, args.size, args.decay, bal, prior)
 
+    train_files = []
+    valid_files = []
+    test_files = []
     for i in range(10):
         train_files.append(data_path + 'mimic_train_'+str(i))
-        test_files.append(data_path + 'mimic_test_'+str(i))
+        valid_files.append(data_path + 'mimic_test_'+str(i))
 
-    model.cross_validate(train_files, test_files)
+    model.cross_validate(train_files, valid_files)
     model.write_stats()
     print(model.accuracy)
     model.plot_roc()

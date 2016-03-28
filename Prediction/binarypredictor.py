@@ -11,8 +11,12 @@ from collections import defaultdict
 import gensim
 import operator
 import matplotlib.pyplot as plt
-import warnings
-warnings.filterwarnings("error")
+from numpy import mean, std
+from scipy import stats
+import pickle
+import math
+# import warnings
+# warnings.filterwarnings("error")
 
 
 class BinaryPredictor(object):
@@ -41,12 +45,15 @@ class BinaryPredictor(object):
         self._stats = {}
         self._true_vals = {}
         self._pred_vals = {}
-        self._total_test = 0
+        self._true_test = {}
+        self._pred_test = {}
         self._total_predictions = 0
         for diag in self._diags:
             self._stats[diag] = {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
             self._true_vals[diag] = []
             self._pred_vals[diag] = []
+            self._true_test[diag] = []
+            self._pred_test[diag] = []
 
     def _generate_icd9_lookup(self):
         self._diag_to_desc = {}
@@ -97,7 +104,33 @@ class BinaryPredictor(object):
         self._model = gensim.models.Word2Vec(sentences, sg=skipgram, window=self._window, iter=5,
                                              size=self._size, min_count=1, workers=20)
 
-    def test(self, filename):
+    def cross_validate(self, train_files, valid_files):
+        self._reset_stats()
+        for i, train in enumerate(train_files):
+            self.train(train_files[i])
+            self.valid(valid_files[i])
+
+    def test(self, test_files):
+        for test in test_files:
+            print(test)
+            with open(test) as f:
+                for line in f:
+                    feed_events = line.split("|")[2].split(" ")
+                    # feed_events = [w for w in feed_events if w not in self._stopwordslist]
+                    actual = line.split("|")[0].split(",")
+                    predictions = self.predict(feed_events)
+                    for diag in self._diags:
+                        prior = (diag in feed_events) if self._prior_pred else None
+
+                        if prior is not None:
+                            predictions[diag] *= abs((self._prior[diag] - int(not prior)))
+
+                        self._true_test[diag].append((diag in actual))
+                        prediction = (predictions[diag] - self._mean[diag]) / self._std[diag]
+                        self._pred_test[diag].append(prediction)
+        self._store_tmp()
+
+    def valid(self, filename):
         with open(filename) as f:
             for line in f:
                 feed_events = line.split("|")[2].split(" ")
@@ -107,6 +140,13 @@ class BinaryPredictor(object):
                 for diag in self._diags:
                     prior = (diag in feed_events) if self._prior_pred else None
                     self.stat_prediction(predictions[diag], (diag in actual), diag, prior)
+
+    def stat_prediction(self, prediction, actual, diag, prior=None):
+        if prior is not None:
+            prediction *= abs((self._prior[diag] - int(not prior)))
+
+        self._true_vals[diag].append(actual)
+        self._pred_vals[diag].append(prediction)
 
     def _remove_stopwords(self, sentences):
         '''
@@ -127,19 +167,6 @@ class BinaryPredictor(object):
 
         return newsentences
 
-    def stat_prediction(self, prediction, actual, diag, prior=None):
-        if prior is not None:
-            prediction *= abs((self._prior[diag] - int(not prior)))
-
-        self._true_vals[diag].append(actual)
-        self._pred_vals[diag].append(prediction)
-
-    def cross_validate(self, train_files, test_files):
-        self._reset_stats()
-        for i, train in enumerate(train_files):
-            self.train(train_files[i])
-            self.test(test_files[i])
-
     @property
     def prediction_per_patient(self):
         return (1.0 * self._total_predictions / (self._miss + self._hit))
@@ -155,23 +182,36 @@ class BinaryPredictor(object):
             fname += "_" + k[:2] + str(self._props[k])
         return fname
 
+    def sigmoid(self, x):
+        return 1 / (1 + math.exp(-x))
+
+    def _normalize(self, d):
+        # self._pred_vals[d] = stats.zscore(self._pred_vals[d])
+        # self._mean[d] = mean(self._pred_vals[d])
+        # self._std[d] = std(self._pred_vals[d])
+        # self._pred_vals[d] = list(map(self.sigmoid, self._pred_vals[d]))
+        precision, recall, thresholds = metrics.precision_recall_curve(
+            self._true_vals[d], self._pred_vals[d])
+        max_f1_score = 0
+        for i in range(len(precision)):
+            if precision[i] == 0 or recall[i] == 0:
+                f1_score = 0
+            else:
+                f1_score = 2 * precision[i] * recall[i] / (precision[i] + recall[i])
+
+            if f1_score > max_f1_score:
+                max_f1_score = f1_score
+                self._diag_thresholds[d] = thresholds[i]
+                self._diag_f1_scores[d] = f1_score
+
     def _calculate_stats(self):
         self._diag_thresholds = {}
         self._diag_f1_scores = {}
-        for d in self._diags:
-            precision, recall, thresholds = metrics.precision_recall_curve(
-                self._true_vals[d], self._pred_vals[d])
-            max_f1_score = 0
-            for i in range(len(precision)):
-                if precision[i] == 0 or recall[i] == 0:
-                    f1_score = 0
-                else:
-                    f1_score = 2 * precision[i] * recall[i] / (precision[i] + recall[i])
+        self._mean = {}
+        self._std = {}
 
-                if f1_score > max_f1_score:
-                    max_f1_score = f1_score
-                    self._diag_thresholds[d] = thresholds[i]
-                    self._diag_f1_scores[d] = f1_score
+        for d in self._diags:
+            self._normalize(d)
 
             for i in range(len(self._true_vals[d])):
                 prob = bool(self._pred_vals[d][i] >= self._diag_thresholds[d])
@@ -194,6 +234,14 @@ class BinaryPredictor(object):
                     self._stats[d]["TN"] += 1
                 else:
                     assert False, "This shouldnt happen"
+
+    def _store_tmp(self):
+        output = open('tmp/' + self.name, 'wb')
+        pickle.dump(self._pred_vals, output)
+        pickle.dump(self._true_vals, output)
+        pickle.dump(self._pred_test, output)
+        pickle.dump(self._true_test, output)
+        output.close()
 
     def plot_roc(self):
         fpr = dict()

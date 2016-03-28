@@ -2,6 +2,7 @@ set search_path to mimiciii;
 
 /* Create allevents table */ 
 drop table if exists allevents;
+drop sequence if exists allevents_ids;
 create table allevents (hadm_id integer, subject_id integer, charttime timestamp, event_type varchar, event varchar);
 
 /* Adding most common abnormal 58 Labevents */
