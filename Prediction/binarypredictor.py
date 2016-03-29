@@ -28,12 +28,11 @@ class BinaryPredictor(object):
         self._filename = filename
 
         with open(filename) as f:
-            lines = f.readlines()
-            for line in lines:
-                events = line.split("|")[2].split(" ") + line.split("|")[3].\
-                    replace("\n", "").split(" ")
-                self._uniq_events |= set(events)
-                self._diags |= set([x for x in events if x.startswith('d_')])
+            line = f.readline()
+            self._uniq_events = set(line.split())
+
+            line = f.readline()
+            self._diags = set(line.split())
 
         self._nevents = len(self._uniq_events)
         self._events_index = sorted(self._uniq_events)
@@ -177,7 +176,7 @@ class BinaryPredictor(object):
 
     @property
     def name(self):
-        fname = self.__class__.__name__
+        fname = "ucsd_" + self.__class__.__name__
         for k in sorted(self._props):
             fname += "_" + k[:2] + str(self._props[k])
         return fname
@@ -252,7 +251,7 @@ class BinaryPredictor(object):
             roc_auc[d] = metrics.auc(fpr[d], tpr[d])
 
         plt.figure(figsize=(12, 12), dpi=120)
-        for d in ["d_250", "d_274", "d_327", "d_285.9", "d_427", "d_428", "d_585"]:
+        for d in ["d_250", "d_272", "d_311", "d_285", "d_427", "d_428", "d_564"]:
             plt.plot(fpr[d], tpr[d], label='{0} (area = {1:0.3f})'
                      .format(self._diag_to_desc[d], roc_auc[d]))
 

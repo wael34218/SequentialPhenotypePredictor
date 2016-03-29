@@ -1,60 +1,49 @@
 import psycopg2
 import math
-import datetime
 import random
 import json
+from collections import defaultdict
 
-uniq_p_feat = ["gender", "age", "white", "asian", "hispanic", "black", "multi", "portuguese",
-               "american", "mideast", "hawaiian", "other"]
+uniq_p_feat = ["gender", "age", "white", "hispanic", "black", "other", "multi", "pat_id"]
 
 
-def set_p_features(hadm_id):
-    cur.execute("""SELECT dob, admittime, gender, ethnicity from admissions join patients
-                on admissions.subject_id = patients.subject_id
-                where hadm_id = %(hadm_id)s """ % {'hadm_id': str(hadm_id)})
+def set_p_features(pat_id):
+    cur.execute("""SELECT bday, gender, ethnicity, pat_id from dedemo where pat_id = %(pat_id)s;"""
+                , {'pat_id': pat_id})
     subject_info = cur.fetchall()
     feats = {}
     for k in uniq_p_feat:
         feats[k] = 0
 
-    feats["gender"] = int(subject_info[0][2] == "M")
-    num_years = (subject_info[0][1] - subject_info[0][0]).days / 365.25
-    feats["age"] = num_years
+    feats["gender"] = int(subject_info[0][1] == "Male")
+    feats["age"] = subject_info[0][0]
 
-    r = subject_info[0][3]
-    if "WHITE" in r:
+    r = subject_info[0][2]
+    if "Caucasian" in r:
         feats["white"] = 1
-    elif "ASIAN" in r:
-        feats["asian"] = 1
-    elif "HISPANIC" in r:
+    elif "Hispanic/Latino" or "Hispanic" in r:
         feats["hispanic"] = 1
-    elif "BLACK" in r:
+    elif "African American" in r:
         feats["black"] = 1
-    elif "MULTI" in r:
+    elif "Multi-Racuak" in r:
         feats["multi"] = 1
-    elif "PORTUGUESE" in r:
-        feats["portuguese"] = 1
-    elif "AMERICAN INDIAN" in r:
-        feats["american"] = 1
-    elif "MIDDLE EASTERN" in r:
-        feats["mideast"] = 1
-    elif "HAWAIIAN" in r or "CARIBBEAN" in r:
-        feats["hawaiian"] = 1
     else:
         feats["other"] = 1
+
+    feats["pat_id"] = subject_info[0][3]
     return feats
 
 
 print("Start")
 try:
-        conn = psycopg2.connect("dbname='mimic' user='mimic' host='localhost' password='mimic'")
+        conn = psycopg2.connect("dbname='ucsd' user='mimic' host='localhost' password='mimic'")
 except:
         print("I am unable to connect to the database")
 
 cur = conn.cursor()
-cur.execute("""set search_path to mimiciii""")
 cur.execute("""SELECT subject_id, charttime, event_type, event, icd9_3, hadm_id
-            from allevents order by subject_id, charttime, event_type desc, event""")
+            from allevents order by subject_id, charttime, case event_type when 'symptom' then 1
+            when 'labevent' then 2 when 'diagnosis' then 3 when 'prescription' then 4 end, event""")
 rows = cur.fetchall()
 print("Query executed")
 
@@ -66,10 +55,13 @@ total_diags = set()
 event_seq = []
 temp_event_seq = []
 all_seq = []
+unique_events = set()
+diag_count = defaultdict(lambda: 0)
 
 for row in rows:
     if row[2] == "diagnosis":
         event = row[2][:1] + "_" + row[4]
+        diag_count[event] += 1
     else:
         event = row[2][:1] + "_" + row[3]
 
@@ -79,9 +71,9 @@ for row in rows:
     elif prev_time is None or prev_subject is None:
         pass
 
-    elif (row[0] != prev_subject) or (row[1] > prev_time + datetime.timedelta(365)):
+    elif (row[0] != prev_subject) or (row[1] > prev_time + 365):
         if len(diags) > 0 and len(event_seq) > 4:
-            p_features = set_p_features(row[5])
+            p_features = set_p_features(row[0])
             all_seq.append([p_features, event_seq, temp_event_seq, diags])
         diags = set()
         event_seq = []
@@ -93,6 +85,7 @@ for row in rows:
         diags = set()
 
     temp_event_seq.append(event)
+    unique_events.add(event)
 
     prev_time = row[1]
     prev_subject = row[0]
@@ -102,6 +95,12 @@ for row in rows:
         diags.add(event)
         total_diags.add(event)
 
+uniq = open('../Data/ucsd/uniq', 'w')
+uniq.write(' '.join(unique_events) + '\n')
+predicted_diags = [y[0] for y in sorted(diag_count.items(), key=lambda x: x[1], reverse=True)[:20]]
+uniq.write(' '.join(predicted_diags))
+uniq.close()
+
 print("Number of total sequences {}".format(len(all_seq)))
 print("Data structures created. Now writing files:")
 train = {}
@@ -109,16 +108,19 @@ test = {}
 valid = {}
 trainv = {}
 
+
 # To include all diagnoses change it to total_diags
 for i in range(10):
-    train[str(i)] = open('../Data/seq_combined/mimic_train_'+str(i), 'w')
-    trainv[str(i)] = open('../Data/seq_combined/mimic_trainv_'+str(i), 'w')
-    test[str(i)] = open('../Data/seq_combined/mimic_test_'+str(i), 'w')
-    valid[str(i)] = open('../Data/seq_combined/mimic_valid_'+str(i), 'w')
+    train[str(i)] = open('../Data/ucsd/mimic_train_'+str(i), 'w')
+    trainv[str(i)] = open('../Data/ucsd/mimic_trainv_'+str(i), 'w')
+    test[str(i)] = open('../Data/ucsd/mimic_test_'+str(i), 'w')
+    valid[str(i)] = open('../Data/ucsd/mimic_valid_'+str(i), 'w')
 
 segment = 0
 random.shuffle(all_seq)
 total = len(all_seq)
+print(total)
+
 
 valid_count = 0
 for seq_index, seq in enumerate(all_seq):

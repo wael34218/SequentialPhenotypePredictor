@@ -21,11 +21,14 @@ class SkipGram(BinaryPredictor):
 
     def predict(self, feed_events):
         te = len(feed_events)
-        weighted_events = [(e,  math.exp(self._decay*(i-te+1)/te))
-                           for i, e in enumerate(feed_events)]
-        predictions = defaultdict(
-            lambda: 1, {d: sim * (sim > 0) for d, sim in self._model.most_similar(
-                weighted_events, topn=self._nevents)})
+        try:
+            weighted_events = [(e,  math.exp(self._decay*(i-te+1)/te))
+                            for i, e in enumerate(feed_events) if e in self._model.vocab]
+            predictions = defaultdict(
+                lambda: 1, {d: sim * (sim > 0) for d, sim in self._model.most_similar(
+                    weighted_events, topn=self._nevents)})
+        except:
+            import pdb; pdb.set_trace()
         return predictions
 
 #    def word_vector_graph(self):
@@ -56,19 +59,19 @@ if __name__ == '__main__':
                         help='Whether to use balanced or not blanaced datasets (0 or 1) default 0')
     args = parser.parse_args()
 
-    data_path = "../Data/seq_combined_legacy/"
+    data_path = "../Data/ucsd/"
     if args.balanced:
-        data_path = "../Data/seq_combined_balanced_legacy/"
+        data_path = "../Data/ucsd_balanced/"
 
     prior = False if args.prior == 0 else True
     bal = False if args.balanced == 0 else True
-    model = SkipGram(data_path + 'mimic_train_0', args.window, args.size, args.decay, bal, prior)
+    model = SkipGram(data_path + 'uniq', args.window, args.size, args.decay, bal, prior)
 
     train_files = []
     valid_files = []
     test_files = []
     for i in range(10):
-        train_files.append(data_path + 'mimic_train_'+str(i))
+        train_files.append(data_path + 'mimic_trainv_'+str(i))
         valid_files.append(data_path + 'mimic_test_'+str(i))
 
     model.cross_validate(train_files, valid_files)
