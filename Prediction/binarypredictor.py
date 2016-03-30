@@ -30,7 +30,6 @@ class BinaryPredictor(object):
         with open(filename) as f:
             line = f.readline()
             self._uniq_events = set(line.split())
-
             line = f.readline()
             self._diags = set(line.split())
 
@@ -64,6 +63,8 @@ class BinaryPredictor(object):
             except:
                 if d[2:] == "285.9":
                     self._diag_to_desc[d] = "Anemia"
+                elif d[2:] == "285":
+                    self._diag_to_desc[d] = "Other and unspecified anemias"
                 elif d[2:] == "287.5":
                     self._diag_to_desc[d] = "Thrombocytopenia"
                 elif d[2:] == "285.1":

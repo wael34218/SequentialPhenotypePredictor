@@ -61,6 +61,8 @@ diag_count = defaultdict(lambda: 0)
 for row in rows:
     if row[2] == "diagnosis":
         event = row[2][:1] + "_" + row[4]
+        if len(event) < 5:
+            event = event[:2] + "0" + event[2:]
         diag_count[event] += 1
     else:
         event = row[2][:1] + "_" + row[3]
@@ -97,7 +99,7 @@ for row in rows:
 
 uniq = open('../Data/ucsd/uniq', 'w')
 uniq.write(' '.join(unique_events) + '\n')
-predicted_diags = [y[0] for y in sorted(diag_count.items(), key=lambda x: x[1], reverse=True)[:20]]
+predicted_diags = [y[0] for y in sorted(diag_count.items(), key=lambda x: x[1], reverse=True)[:40]]
 uniq.write(' '.join(predicted_diags))
 uniq.close()
 
