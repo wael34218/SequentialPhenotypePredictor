@@ -308,13 +308,13 @@ class BinaryPredictor(object):
     def _d_auc(self, d):
         return (metrics.roc_auc_score(self._true_vals[d], self._pred_vals[d]))
 
-    def _d_specificity(self, d):
+    def _d_sensitivity(self, d):
         if self._stats[d]["TP"] + self._stats[d]["FN"] == 0:
             return (self._stats[d]["TP"] / 1.0)
         else:
             return (self._stats[d]["TP"]*1.0 / (self._stats[d]["TP"] + self._stats[d]["FN"]))
 
-    def _d_sensitivity(self, d):
+    def _d_specificity(self, d):
         if self._stats[d]["FP"] + self._stats[d]["TN"] == 0:
             return (self._stats[d]["TN"] / 1.0)
         else:
