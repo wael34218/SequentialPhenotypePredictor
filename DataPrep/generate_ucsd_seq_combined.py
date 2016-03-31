@@ -75,7 +75,7 @@ for row in rows:
 
     elif (row[0] != prev_subject) or (row[1] > prev_time + 365):
         if len(diags) > 0 and len(event_seq) > 4:
-            p_features = set_p_features(row[0])
+            p_features = set_p_features(prev_subject)
             all_seq.append([p_features, event_seq, temp_event_seq, diags])
         diags = set()
         event_seq = []
