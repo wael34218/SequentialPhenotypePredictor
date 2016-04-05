@@ -71,8 +71,8 @@ if __name__ == '__main__':
     valid_files = []
     test_files = []
     for i in range(10):
-        train_files.append(data_path + 'mimic_trainv_'+str(i))
-        valid_files.append(data_path + 'mimic_test_'+str(i))
+        train_files.append(data_path + 'trainv_'+str(i))
+        valid_files.append(data_path + 'test_'+str(i))
 
     model.cross_validate(train_files, valid_files)
     model.write_stats()

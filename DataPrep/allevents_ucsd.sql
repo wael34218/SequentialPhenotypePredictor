@@ -1,8 +1,8 @@
 \c ucsd
 drop table if exists allevents;
+drop sequence if exists allevents_ids;
 
 create table allevents (hadm_id integer, subject_id varchar, charttime integer, event_type varchar, event varchar, description varchar);
-
 
 insert into allevents
 select encounter_id, pat_id ,(array_agg(result_day ORDER BY result_day asc))[1] as charttime, 'labevent' as event_type, newid as event from delab
@@ -40,7 +40,7 @@ where icd9 in
   select icd9 from
   (
       select encounter_id, icd9 from dediag group by encounter_id, icd9
-  ) as uniqlab where icd9 < 1000
+  ) as uniqlab where icd9 !~ '^\d{4}'
   group by icd9 having count(*) > 5
 )
 and pat_id in (select pat_id from dehosp group by pat_id having count(*) > 1)
@@ -70,5 +70,9 @@ alter table allevents add column icd9_1 varchar(10);
 alter table allevents add column icd9_2 varchar(10);
 alter table allevents add column icd9_3 varchar(10);
 
-UPDATE allevents SET event_type='symptom' WHERE event_type='diagnosis' AND (event LIKE '78%' or event LIKE '79%');
+DELETE FROM allevents where event ~ '^IMO';
+DELETE FROM allevents where event ~ '^S';
+DELETE FROM allevents where event = 'NULL';
+UPDATE allevents SET event_type='symptom' WHERE event_type='diagnosis' AND event ~ '^7[89]\d.*';
+UPDATE allevents SET event_type='condition' WHERE event_type='diagnosis' AND event ~ '^V.*';
 UPDATE allevents SET event=b.gevent FROM (select (array_agg(event))[1] AS gevent, description FROM allevents WHERE event_type='prescription' GROUP BY description) AS b WHERE allevents.event_type='prescription' AND allevents.description=b.description;

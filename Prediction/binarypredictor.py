@@ -15,6 +15,9 @@ from numpy import mean, std
 from scipy import stats
 import pickle
 import math
+
+from chao_word2vec.word2vec import Word2Vec
+
 # import warnings
 # warnings.filterwarnings("error")
 
@@ -63,8 +66,18 @@ class BinaryPredictor(object):
             except:
                 if d[2:] == "285.9":
                     self._diag_to_desc[d] = "Anemia"
+                elif d[2:] == "008":
+                    self._diag_to_desc[d] = "Intestinal infections due to other organisms"
+                elif d[2:] == "280":
+                    self._diag_to_desc[d] = "Iron deficiency anemias"
+                elif d[2:] == "284":
+                    self._diag_to_desc[d] = "Aplastic anemia and other bone marrow failure syndromes"
+                elif d[2:] == "287":
+                    self._diag_to_desc[d] = "Purpura and other hemorrhagic conditions"
                 elif d[2:] == "285":
                     self._diag_to_desc[d] = "Other and unspecified anemias"
+                elif d[2:] == "288":
+                    self._diag_to_desc[d] = "Diseases of white blood cells"
                 elif d[2:] == "287.5":
                     self._diag_to_desc[d] = "Thrombocytopenia"
                 elif d[2:] == "285.1":
@@ -103,6 +116,11 @@ class BinaryPredictor(object):
 
         self._model = gensim.models.Word2Vec(sentences, sg=skipgram, window=self._window, iter=5,
                                              size=self._size, min_count=1, workers=20)
+
+        # pre = str.replace(filename, "_", "_pre_")
+        # suf = str.replace(filename, "_", "_suf_")
+        # self._model = Word2Vec(sentences, sg=skipgram, window=self._window, iter=5,
+        #                        size=self._size, min_count=1, workers=20, pre=pre, suf=suf)
 
     def cross_validate(self, train_files, valid_files):
         self._reset_stats()

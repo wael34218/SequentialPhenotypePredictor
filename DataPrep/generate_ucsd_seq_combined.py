@@ -7,9 +7,43 @@ from collections import defaultdict
 uniq_p_feat = ["gender", "age", "white", "hispanic", "black", "other", "multi", "pat_id"]
 
 
+def calculate_window(events, days):
+    event_count = defaultdict(lambda: 0)
+    events_per_day = defaultdict(lambda: 0)
+    for i, e in enumerate(events):
+        event_count[e] += 1
+        events_per_day[days[i]] += 1
+
+    pre = [0] * len(events)
+    suf = [0] * len(events)
+
+    events_in_day = 0
+    previous_day = None
+    for i, e in enumerate(events):
+        if previous_day != days[i]:
+            previous_day = days[i]
+            events_in_day = 0
+
+        limit = (7 * event_count[e]) + 15
+        pre[i] = events_in_day
+        for d in range(max(days[i] - limit, 0), days[i]):
+            pre[i] += events_per_day[d]
+
+        suf[i] = events_per_day[days[i]] - events_in_day - 1
+        for d in range(days[i] + 1, days[i] + limit):
+            suf[i] += events_per_day[d]
+
+        events_in_day += 1
+
+    pre_str = " ".join(map(str, pre))
+    suf_str = " ".join(map(str, suf))
+
+    return (pre_str, suf_str)
+
+
 def set_p_features(pat_id):
-    cur.execute("""SELECT bday, gender, ethnicity, pat_id from dedemo where pat_id = %(pat_id)s;"""
-                , {'pat_id': pat_id})
+    cur.execute("""SELECT bday, gender, ethnicity, pat_id from dedemo where pat_id=%(pat_id)s;""",
+                {'pat_id': pat_id})
     subject_info = cur.fetchall()
     feats = {}
     for k in uniq_p_feat:
@@ -25,7 +59,7 @@ def set_p_features(pat_id):
         feats["hispanic"] = 1
     elif "African American" in r:
         feats["black"] = 1
-    elif "Multi-Racuak" in r:
+    elif "Multi-Racial" in r:
         feats["multi"] = 1
     else:
         feats["other"] = 1
@@ -42,8 +76,9 @@ except:
 
 cur = conn.cursor()
 cur.execute("""SELECT subject_id, charttime, event_type, event, icd9_3, hadm_id
-            from allevents order by subject_id, charttime, case event_type when 'symptom' then 1
-            when 'labevent' then 2 when 'diagnosis' then 3 when 'prescription' then 4 end, event""")
+            from allevents order by subject_id, charttime, case event_type when 'condition' then 1
+            when 'symptom' then 2 when 'labevent' then 3 when 'diagnosis' then 4
+            when 'prescription' then 5 end, event""")
 rows = cur.fetchall()
 print("Query executed")
 
@@ -55,6 +90,7 @@ total_diags = set()
 event_seq = []
 temp_event_seq = []
 all_seq = []
+all_days = []
 unique_events = set()
 diag_count = defaultdict(lambda: 0)
 
@@ -62,7 +98,7 @@ for row in rows:
     if row[2] == "diagnosis":
         event = row[2][:1] + "_" + row[4]
         if len(event) < 5:
-            event = event[:2] + "0" + event[2:]
+            event = event[:2] + "0"*(5-len(event)) + event[2:]
         diag_count[event] += 1
     else:
         event = row[2][:1] + "_" + row[3]
@@ -76,10 +112,12 @@ for row in rows:
     elif (row[0] != prev_subject) or (row[1] > prev_time + 365):
         if len(diags) > 0 and len(event_seq) > 4:
             p_features = set_p_features(prev_subject)
-            all_seq.append([p_features, event_seq, temp_event_seq, diags])
+            pre, suf = calculate_window(event_seq+temp_event_seq, all_days)
+            all_seq.append([p_features, event_seq, temp_event_seq, diags, pre, suf])
         diags = set()
         event_seq = []
         temp_event_seq = []
+        all_days = []
 
     elif prev_hadm_id != row[5]:
         event_seq += temp_event_seq
@@ -88,6 +126,7 @@ for row in rows:
 
     temp_event_seq.append(event)
     unique_events.add(event)
+    all_days.append(row[1])
 
     prev_time = row[1]
     prev_subject = row[0]
@@ -99,7 +138,7 @@ for row in rows:
 
 uniq = open('../Data/ucsd/uniq', 'w')
 uniq.write(' '.join(unique_events) + '\n')
-predicted_diags = [y[0] for y in sorted(diag_count.items(), key=lambda x: x[1], reverse=True)[:40]]
+predicted_diags = [y[0] for y in sorted(diag_count.items(), key=lambda x: x[1], reverse=True)[:100]]
 uniq.write(' '.join(predicted_diags))
 uniq.close()
 
@@ -109,14 +148,21 @@ train = {}
 test = {}
 valid = {}
 trainv = {}
-
+trainv_pre = {}
+trainv_suf = {}
+test_pre = {}
+test_suf = {}
 
 # To include all diagnoses change it to total_diags
 for i in range(10):
-    train[str(i)] = open('../Data/ucsd/mimic_train_'+str(i), 'w')
-    trainv[str(i)] = open('../Data/ucsd/mimic_trainv_'+str(i), 'w')
-    test[str(i)] = open('../Data/ucsd/mimic_test_'+str(i), 'w')
-    valid[str(i)] = open('../Data/ucsd/mimic_valid_'+str(i), 'w')
+    train[str(i)] = open('../Data/ucsd/train_'+str(i), 'w')
+    trainv[str(i)] = open('../Data/ucsd/trainv_'+str(i), 'w')
+    test[str(i)] = open('../Data/ucsd/test_'+str(i), 'w')
+    valid[str(i)] = open('../Data/ucsd/valid_'+str(i), 'w')
+    trainv_pre[str(i)] = open('../Data/ucsd/trainv_pre_'+str(i), 'w')
+    trainv_suf[str(i)] = open('../Data/ucsd/trainv_suf_'+str(i), 'w')
+    test_pre[str(i)] = open('../Data/ucsd/test_pre_'+str(i), 'w')
+    test_suf[str(i)] = open('../Data/ucsd/test_suf_'+str(i), 'w')
 
 segment = 0
 random.shuffle(all_seq)
@@ -131,16 +177,20 @@ for seq_index, seq in enumerate(all_seq):
         valid_count = 0
         segment += 1
 
-    [patient, events, final_events, diagnoses] = seq
+    [patient, events, final_events, diagnoses, pre, suf] = seq
     serial = (",").join(diagnoses)
     serial += "|" + json.dumps(patient)
     serial += "|" + " ".join(events)
     serial += "|" + " ".join(final_events)
 
     test[str(segment)].write(serial+'\n')
+    test_pre[str(segment)].write(pre + '\n')
+    test_suf[str(segment)].write(suf + '\n')
     for f in range(10):
         if f != segment:
             trainv[str(f)].write(serial+'\n')
+            trainv_pre[str(f)].write(pre + '\n')
+            trainv_suf[str(f)].write(suf + '\n')
             if valid_count < math.floor(total / 10):
                 valid[str(f)].write(serial+'\n')
                 valid_count += 1
@@ -149,7 +199,12 @@ for seq_index, seq in enumerate(all_seq):
 
 for i in range(10):
     train[str(i)].close()
+    trainv[str(i)].close()
     test[str(i)].close()
     valid[str(i)].close()
+    trainv_pre[str(i)].close()
+    trainv_suf[str(i)].close()
+    test_pre[str(i)].close()
+    test_suf[str(i)].close()
 
 print("Done")

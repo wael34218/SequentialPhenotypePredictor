@@ -10,7 +10,7 @@ CREATE TABLE deDemo
 
 
 CREATE TABLE deDiag 
-(pat_id varchar, encounter_id int , ICD9 double precision , Line double precision, primary_dx_YN varchar, contact_day int);
+(pat_id varchar, encounter_id int , ICD9 varchar, Line double precision, primary_dx_YN varchar, contact_day int);
 
 \copy deDiag FROM '../Data/UCSDData/deDiag.csv' WITH (FORMAT CSV, DELIMITER '|', Null 'NaN', QUOTE '''', HEADER)
 

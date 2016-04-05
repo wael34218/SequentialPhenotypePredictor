@@ -17,7 +17,11 @@ rows = cur.fetchall()
 
 index = 0
 for row in rows:
-    updateRecordStatus = "update allevents set icd9_3='"+str(int(float(row[1])))+"'"
-    updateRecordStatus += " where id=" + str(row[0]) + ";"
+    if row[1].startswith('E'):
+        updateRecordStatus = "update allevents set icd9_3='"+row[1]+"'"
+        updateRecordStatus += " where id=" + str(row[0]) + ";"
+    else:
+        updateRecordStatus = "update allevents set icd9_3='"+str(int(float(row[1])))+"'"
+        updateRecordStatus += " where id=" + str(row[0]) + ";"
     cur.execute(updateRecordStatus)
     conn.commit()
