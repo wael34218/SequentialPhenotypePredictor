@@ -1,10 +1,17 @@
 import psycopg2
 import math
-import random
+from random import randrange, shuffle
 import json
 from collections import defaultdict
+import os
+from os import path
 
 uniq_p_feat = ["gender", "age", "white", "hispanic", "black", "other", "multi", "pat_id"]
+
+seq_path = '../../Data/ucsd_seq/'
+balanced_seq_path = '../../Data/ucsd_balanced/'
+num_pred_diag = 80
+balance_percent = 2 / 100
 
 
 def calculate_window(events, days):
@@ -24,7 +31,8 @@ def calculate_window(events, days):
             previous_day = days[i]
             events_in_day = 0
 
-        limit = (7 * event_count[e]) + 15
+        # Original equation for limit is (7 * event_count[e]) + 15
+        limit = 365
         pre[i] = events_in_day
         for d in range(max(days[i] - limit, 0), days[i]):
             pre[i] += events_per_day[d]
@@ -99,7 +107,9 @@ for row in rows:
         event = row[2][:1] + "_" + row[4]
         if len(event) < 5:
             event = event[:2] + "0"*(5-len(event)) + event[2:]
-        diag_count[event] += 1
+
+        if not row[2].startswith("E"):
+            diag_count[event] += 1
     else:
         event = row[2][:1] + "_" + row[3]
 
@@ -136,9 +146,17 @@ for row in rows:
         diags.add(event)
         total_diags.add(event)
 
-uniq = open('../Data/ucsd/uniq', 'w')
+# Write down the vocalulary used and diagnoses that we want to predict
+predicted_diags = [y[0] for y in
+                   sorted(diag_count.items(), key=lambda x: x[1], reverse=True)[:num_pred_diag]]
+
+uniq = open(seq_path + 'vocab', 'w')
 uniq.write(' '.join(unique_events) + '\n')
-predicted_diags = [y[0] for y in sorted(diag_count.items(), key=lambda x: x[1], reverse=True)[:100]]
+uniq.write(' '.join(predicted_diags))
+uniq.close()
+
+uniq = open(balanced_seq_path + 'vocab', 'w')
+uniq.write(' '.join(unique_events) + '\n')
 uniq.write(' '.join(predicted_diags))
 uniq.close()
 
@@ -155,17 +173,13 @@ test_suf = {}
 
 # To include all diagnoses change it to total_diags
 for i in range(10):
-    train[str(i)] = open('../Data/ucsd/train_'+str(i), 'w')
-    trainv[str(i)] = open('../Data/ucsd/trainv_'+str(i), 'w')
-    test[str(i)] = open('../Data/ucsd/test_'+str(i), 'w')
-    valid[str(i)] = open('../Data/ucsd/valid_'+str(i), 'w')
-    trainv_pre[str(i)] = open('../Data/ucsd/trainv_pre_'+str(i), 'w')
-    trainv_suf[str(i)] = open('../Data/ucsd/trainv_suf_'+str(i), 'w')
-    test_pre[str(i)] = open('../Data/ucsd/test_pre_'+str(i), 'w')
-    test_suf[str(i)] = open('../Data/ucsd/test_suf_'+str(i), 'w')
+    train[str(i)] = open(seq_path+'_train_'+str(i), 'w')
+    trainv[str(i)] = open(seq_path+'_trainv_'+str(i), 'w')
+    test[str(i)] = open(seq_path+'_test_'+str(i), 'w')
+    valid[str(i)] = open(seq_path+'_valid_'+str(i), 'w')
 
 segment = 0
-random.shuffle(all_seq)
+shuffle(all_seq)
 total = len(all_seq)
 print(total)
 
@@ -182,15 +196,13 @@ for seq_index, seq in enumerate(all_seq):
     serial += "|" + json.dumps(patient)
     serial += "|" + " ".join(events)
     serial += "|" + " ".join(final_events)
+    serial += "|" + pre
+    serial += "|" + suf
 
     test[str(segment)].write(serial+'\n')
-    test_pre[str(segment)].write(pre + '\n')
-    test_suf[str(segment)].write(suf + '\n')
     for f in range(10):
         if f != segment:
             trainv[str(f)].write(serial+'\n')
-            trainv_pre[str(f)].write(pre + '\n')
-            trainv_suf[str(f)].write(suf + '\n')
             if valid_count < math.floor(total / 10):
                 valid[str(f)].write(serial+'\n')
                 valid_count += 1
@@ -202,9 +214,62 @@ for i in range(10):
     trainv[str(i)].close()
     test[str(i)].close()
     valid[str(i)].close()
-    trainv_pre[str(i)].close()
-    trainv_suf[str(i)].close()
-    test_pre[str(i)].close()
-    test_suf[str(i)].close()
 
-print("Done")
+print("Raw sequences generated")
+# Generate balanced datasets
+files = [f for f in os.listdir(seq_path)
+         if path.isfile(path.join(seq_path, f)) and f.startswith("_")]
+
+for f in files:
+    print("Balancing file " + f)
+    total = 0
+    diag_lines = defaultdict(lambda: [])
+    diag_counts = defaultdict(lambda: 0)
+    final_lines = []
+
+    with open(path.join(seq_path, f)) as old:
+        for line in old.readlines():
+            final_lines.append(line)
+            total += 1
+            diags = line.split("|")[0].split(",")
+            for d in diags:
+                if d in predicted_diags:
+                    diag_lines[d].append(line)
+                    diag_counts[d] += 1
+
+    while min(diag_counts.values()) < int(total * balance_percent):
+        minimum = int(total * balance_percent)
+        d = min(diag_counts, key=diag_counts.get)
+        for _ in range(minimum + 5 - diag_counts[d]):
+            line = diag_lines[d][randrange(len(diag_lines[d]))]
+            total += 1
+            diags = line.split("|")[0].split(",")
+            final_lines.append(line)
+            for di in diags:
+                if di in predicted_diags:
+                    diag_counts[di] += 1
+
+    shuffle(final_lines)
+    with open(path.join(balanced_seq_path, f), 'w') as new:
+        for line in final_lines:
+            new.write(line)
+
+print("Raw balanced sequences generated")
+
+# Split seq, pre and suf files for balanced and normal ones
+for directory in [seq_path, balanced_seq_path]:
+    for f in files:
+        with open(path.join(directory, f)) as combined:
+            # Remove the first underscore from the name of the file
+            p = path.join(directory, f[1:])
+            with open(p, 'w') as seq, open(p+"_pre", 'w') as pre, open(p+"_suf", 'w') as suf:
+                for line in combined.readlines():
+                    data = line.split("|")
+                    pre.write(data[4]+'\n')
+                    suf.write(data[5])
+                    seq.write("|".join(data[:4])+'\n')
+
+        # Remove the original file
+        os.remove(path.join(directory, f))
+
+print("Final seq, pre, suf files created")

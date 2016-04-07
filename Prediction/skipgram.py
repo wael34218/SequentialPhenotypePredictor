@@ -5,14 +5,16 @@ from binarypredictor import BinaryPredictor
 
 
 class SkipGram(BinaryPredictor):
-    def __init__(self, filename, window=10, size=600, decay=5, balanced=False, prior=True):
+    def __init__(self, filename, window=10, size=600, decay=5, balanced=False, prior=True,
+                 dataset="ucsd", model="original"):
         self._window = window
         self._size = size
         self._decay = decay
         self._prior_pred = prior
         self._stopwordslist = []
+        self._dataset = dataset
         self._props = {"window": window, "size": size, "decay": decay, "prior": prior,
-                       "balanced": balanced}
+                       "balanced": balanced, "dataset": dataset, "model": model}
         super(SkipGram, self).__init__(filename)
 
     def train(self, filename):
@@ -21,14 +23,11 @@ class SkipGram(BinaryPredictor):
 
     def predict(self, feed_events):
         te = len(feed_events)
-        try:
-            weighted_events = [(e,  math.exp(self._decay*(i-te+1)/te))
-                            for i, e in enumerate(feed_events) if e in self._model.vocab]
-            predictions = defaultdict(
-                lambda: 1, {d: sim * (sim > 0) for d, sim in self._model.most_similar(
-                    weighted_events, topn=self._nevents)})
-        except:
-            import pdb; pdb.set_trace()
+        weighted_events = [(e,  math.exp(self._decay*(i-te+1)/te))
+                           for i, e in enumerate(feed_events) if e in self._model.vocab]
+        predictions = defaultdict(
+            lambda: 1, {d: sim * (sim > 0) for d, sim in self._model.most_similar(
+                weighted_events, topn=self._nevents)})
         return predictions
 
 #    def word_vector_graph(self):
@@ -57,15 +56,24 @@ if __name__ == '__main__':
                         help='Add prior probability (0 for False, 1 for True) default 1')
     parser.add_argument('-b', '--balanced', action="store", default=0, type=int,
                         help='Whether to use balanced or not blanaced datasets (0 or 1) default 0')
+    parser.add_argument('-ds', '--dataset', action="store", default="ucsd", type=str,
+                        help='Which dataset to use "ucsd" or "mimic", default "ucsd"')
+    parser.add_argument('-m', '--model', action="store", default="org", type=str,
+                        help='Which model to use "org" or "chao", default "org"')
     args = parser.parse_args()
 
-    data_path = "../Data/ucsd/"
+    ds = "ucsd"
+    if args.dataset == "mimic":
+        ds = "mimic"
+
+    data_path = "../Data/" + ds + "_seq/"
     if args.balanced:
-        data_path = "../Data/ucsd_balanced/"
+        data_path = "../Data/" + ds + "_balanced/"
 
     prior = False if args.prior == 0 else True
     bal = False if args.balanced == 0 else True
-    model = SkipGram(data_path + 'uniq', args.window, args.size, args.decay, bal, prior)
+    model = SkipGram(data_path + 'vocab', args.window, args.size, args.decay, bal, prior, ds,
+                     args.model)
 
     train_files = []
     valid_files = []

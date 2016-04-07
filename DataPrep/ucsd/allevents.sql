@@ -18,7 +18,7 @@ and pat_id in (select pat_id from dehosp group by pat_id having count(*) > 1)
 group by newid, encounter_id, pat_id
 ;
 
-/* Adding most common 66 Prescriptions */
+/* Adding most prescriptions*/
 insert into allevents
 select encounter_id, pat_id, order_day as charttime, 'prescription' as event_type, medicationid as event, description from demed
 where medicationid in
@@ -32,7 +32,7 @@ where medicationid in
 and pat_id in (select pat_id from dehosp group by pat_id having count(*) > 1)
 ;
 
-/* Adding most common 58 Diagnoses */
+/* Adding diagnoses */
 insert into allevents
 select encounter_id, pat_id, contact_day as charttime, 'diagnosis' as event_type, icd9 as event from dediag
 where icd9 in

@@ -14,7 +14,7 @@ where flag='abnormal' and itemid in
   (
     select hadm_id, itemid from labevents where flag='abnormal' group by hadm_id, itemid
   ) as uniqlab
-  group by itemid having count(*) > 5000
+  group by itemid having count(*) > 50
 )
 and subject_id in (select subject_id from admissions group by subject_id having count(*) > 1)
 group by itemid, hadm_id, subject_id
@@ -29,7 +29,7 @@ where formulary_drug_cd in
   (
     select hadm_id, formulary_drug_cd from prescriptions group by hadm_id, formulary_drug_cd
   ) as uniqlab
-  group by formulary_drug_cd having count(*) > 5000
+  group by formulary_drug_cd having count(*) > 50
 )
 and subject_id in (select subject_id from admissions group by subject_id having count(*) > 1)
 ;
@@ -44,14 +44,17 @@ where icd9_code in
   (
       select hadm_id, icd9_code from diagnoses_icd group by hadm_id, icd9_code
   ) as uniqlab
-  group by icd9_code having count(*) > 2000
+  group by icd9_code having count(*) > 5
 )
 and diagnoses_icd.subject_id in
 (select subject_id from admissions group by subject_id having count(*) > 1)
 ;
 
 /* Delete unimportant diagnoses */
-delete from allevents where event_type='diagnosis' and event like 'V%';
+DELETE FROM allevents where event = 'NULL';
+DELETE FROM allevents where event = '';
+UPDATE allevents SET event_type='condition' WHERE event_type='diagnosis' AND event ~ '^V.*';
+UPDATE allevents SET event_type='symptom' WHERE event_type='diagnosis' AND event ~ '^7[89]\d.*';
 
 /* Create unique ID*/ 
 CREATE SEQUENCE allevents_ids;

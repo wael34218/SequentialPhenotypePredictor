@@ -11,8 +11,6 @@ from collections import defaultdict
 import gensim
 import operator
 import matplotlib.pyplot as plt
-from numpy import mean, std
-from scipy import stats
 import pickle
 import math
 
@@ -64,24 +62,20 @@ class BinaryPredictor(object):
             try:
                 self._diag_to_desc[d] = tree.find(d[2:]).description
             except:
-                if d[2:] == "285.9":
-                    self._diag_to_desc[d] = "Anemia"
-                elif d[2:] == "008":
+                if d[2:] == "008":
                     self._diag_to_desc[d] = "Intestinal infections due to other organisms"
                 elif d[2:] == "280":
                     self._diag_to_desc[d] = "Iron deficiency anemias"
                 elif d[2:] == "284":
-                    self._diag_to_desc[d] = "Aplastic anemia and other bone marrow failure syndromes"
-                elif d[2:] == "287":
-                    self._diag_to_desc[d] = "Purpura and other hemorrhagic conditions"
+                    self._diag_to_desc[d] = "Aplastic anemia and other bone marrow failure syndrome"
                 elif d[2:] == "285":
                     self._diag_to_desc[d] = "Other and unspecified anemias"
+                elif d[2:] == "286":
+                    self._diag_to_desc[d] = "Coagulation defects"
+                elif d[2:] == "287":
+                    self._diag_to_desc[d] = "Purpura and other hemorrhagic conditions"
                 elif d[2:] == "288":
                     self._diag_to_desc[d] = "Diseases of white blood cells"
-                elif d[2:] == "287.5":
-                    self._diag_to_desc[d] = "Thrombocytopenia"
-                elif d[2:] == "285.1":
-                    self._diag_to_desc[d] = "Acute posthemorrhagic anemia"
                 else:
                     self._diag_to_desc[d] = "Not Found"
 
@@ -114,13 +108,14 @@ class BinaryPredictor(object):
         for d in diag_totals:
             self._prior[d] = diag_joined[d] * 1.0 / diag_totals[d]
 
-        self._model = gensim.models.Word2Vec(sentences, sg=skipgram, window=self._window, iter=5,
-                                             size=self._size, min_count=1, workers=20)
-
-        # pre = str.replace(filename, "_", "_pre_")
-        # suf = str.replace(filename, "_", "_suf_")
-        # self._model = Word2Vec(sentences, sg=skipgram, window=self._window, iter=5,
-        #                        size=self._size, min_count=1, workers=20, pre=pre, suf=suf)
+        if self._props["model"] == "org":
+            self._model = gensim.models.Word2Vec(sentences, sg=skipgram, window=self._window,
+                                                 iter=5, size=self._size, min_count=1, workers=20)
+        else:
+            pre = filename + "_pre"
+            suf = filename + "_suf"
+            self._model = Word2Vec(sentences, sg=skipgram, window=self._window, iter=5,
+                                   size=self._size, min_count=1, workers=20, pre=pre, suf=suf)
 
     def cross_validate(self, train_files, valid_files):
         self._reset_stats()
@@ -195,9 +190,9 @@ class BinaryPredictor(object):
 
     @property
     def name(self):
-        fname = "ucsd_" + self.__class__.__name__
+        fname = self.__class__.__name__
         for k in sorted(self._props):
-            fname += "_" + k[:2] + str(self._props[k])
+            fname += "_" + k[:2] + "=" + str(self._props[k])
         return fname
 
     def sigmoid(self, x):
