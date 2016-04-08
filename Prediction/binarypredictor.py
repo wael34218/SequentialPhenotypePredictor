@@ -79,6 +79,9 @@ class BinaryPredictor(object):
                 else:
                     self._diag_to_desc[d] = "Not Found"
 
+    def lookup_diagnosis(self, diag):
+        return self._diag_to_desc[diag]
+
     def base_train(self, filename, skipgram=0):
         '''
         This function trains the sequences on word2vec exculding stopwords and calculates prior
