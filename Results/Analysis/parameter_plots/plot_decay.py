@@ -1,9 +1,10 @@
 import matplotlib.pyplot as plt
+import seaborn
 import csv
 
 selected_diags = ["d_584", "d_428", "d_416", "d_486", "d_493", "d_327", "d_038"]
-plt.figure(figsize=(12, 10), dpi=100)
-with open('cbow_decay.csv', 'rU') as f:
+plt.figure(figsize=(10, 8), dpi=100)
+with open('cbow_decay_mimic.csv', 'rU') as f:
     reader = csv.reader(f)
     x = []
     for line in reader:
@@ -16,5 +17,5 @@ with open('cbow_decay.csv', 'rU') as f:
 
 plt.xlabel('Decay Factor', fontsize=14, color='black')
 plt.ylabel('AUC', fontsize=14, color='black')
-plt.legend(framealpha=0.5, loc=4)
+plt.legend(framealpha=0.5, loc=4, fontsize=12)
 plt.savefig('cbow_decay.png')

@@ -2,11 +2,12 @@ from collections import defaultdict
 import math
 import argparse
 from binarypredictor import BinaryPredictor
+import sys
 
 
 class SkipGram(BinaryPredictor):
     def __init__(self, filename, window=10, size=600, decay=5, balanced=False, prior=True,
-                 dataset="ucsd", model="original"):
+                 dataset="ucsd", model="org"):
         self._window = window
         self._size = size
         self._decay = decay
@@ -30,19 +31,43 @@ class SkipGram(BinaryPredictor):
                 weighted_events, topn=self._nevents)})
         return predictions
 
-#    def word_vector_graph(self):
-#        from matplotlib import pyplot as plt
-#        fig = plt.figure(figsize=(14, 14), dpi=180)
-#        colors = {"d": "black", "p": "blue", "l": "red"}
-#        plt.plot()
-#        ax = fig.add_subplot(111)
-#        for e in self._uniq_events:
-#            if e in ["d_774", "p_AMPVL", "p_NEOSYRD5W", "p_GENT10I"]:
-#                continue
-#            v = self._model[e]
-#            plt.plot(v[0], v[1])
-#            ax.annotate(e, xy=v, fontsize=10, color=colors[e[0]])
-#        plt.savefig('../Results/Plots/event_rep_colored.png')
+    def word_vector_graph(self, filename):
+        from matplotlib import pyplot as plt
+        # import seaborn
+        self.counts = defaultdict(lambda: 0)
+        with open(filename) as f:
+            for s in f:
+                sentense = s.split("|")[2].split(" ") + s.split("|")[3].replace("\n", "").split(" ")
+                for e in sentense:
+                    self.counts[e] += 1
+
+        fig = plt.figure(figsize=(14, 14), dpi=180)
+        colors = {"d": "black", "p": "blue", "l": "red", "s": "green", "c": "orange"}
+        plt.plot()
+        ax = fig.add_subplot(111)
+
+        events = []
+        for t in ["c", "s", "p", "d", "l"]:
+            evs = {e: c for e, c in self.counts.items() if e.startswith(t)}
+            events += [x for x, y in sorted(evs.items(), key=lambda k: k[1], reverse=True)[:100]]
+
+        for e in events:
+            if e in ["c_V3000", "c_V053", "c_V502", "c_V3001", "c_290", "c_V290"]:
+                continue
+            if e in self._model.vocab:
+                v = self._model[e]
+                plt.plot(v[0], v[1])
+                ax.annotate(e, xy=v, fontsize=10, color=colors[e[0]])
+
+        p = ax.bar(0, [0], 0, color='blue')
+        d = ax.bar(0, [0], 0, color='black')
+        c = ax.bar(0, [0], 0, color='orange')
+        s = ax.bar(0, [0], 0, color='green')
+        l = ax.bar(0, [0], 0, color='red')
+        ax.legend((d[0], p[0], l[0], c[0], s[0]), ('Diagnosis', 'Prescription', 'Lab test',
+                                                   'Condition', 'Symptom'), loc=4)
+        plt.savefig('../Results/Plots/event_'+self._props["dataset"]+'_colored.png')
+        sys.exit(0)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SkipGram Similarity')
@@ -52,8 +77,8 @@ if __name__ == '__main__':
                         help='Set size of word vectors (default: 600)')
     parser.add_argument('-d', '--decay', action="store", default=5, type=float,
                         help='Set exponential decay through time (default: 5)')
-    parser.add_argument('-p', '--prior', action="store", default=1, type=int,
-                        help='Add prior probability (0 for False, 1 for True) default 1')
+    parser.add_argument('-p', '--prior', action="store", default=0, type=int,
+                        help='Add prior probability (0 for False, 1 for True) default 0')
     parser.add_argument('-b', '--balanced', action="store", default=0, type=int,
                         help='Whether to use balanced or not blanaced datasets (0 or 1) default 0')
     parser.add_argument('-ds', '--dataset', action="store", default="ucsd", type=str,

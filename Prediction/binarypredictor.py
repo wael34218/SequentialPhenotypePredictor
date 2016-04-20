@@ -10,14 +10,15 @@ import json
 from collections import defaultdict
 import gensim
 import operator
+import matplotlib
+matplotlib.use('tkagg')
 import matplotlib.pyplot as plt
 import pickle
 import math
+import seaborn
+seaborn.set_style("darkgrid")
 
 from chao_word2vec.word2vec import Word2Vec
-
-# import warnings
-# warnings.filterwarnings("error")
 
 
 class BinaryPredictor(object):
@@ -80,7 +81,10 @@ class BinaryPredictor(object):
                     self._diag_to_desc[d] = "Not Found"
 
     def lookup_diagnosis(self, diag):
-        return self._diag_to_desc[diag]
+        if diag in self._diag_to_desc:
+            return self._diag_to_desc[diag]
+        else:
+            return "Not Found"
 
     def base_train(self, filename, skipgram=0):
         '''
