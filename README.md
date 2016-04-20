@@ -34,16 +34,19 @@ After executing the last command you will see collection of text files populated
 
 A line is divided by pipes "|" into 4 parts:
 1. Diagnoses that we used as labels. In this example it is:
-    d\_401,d\_486
+
+> d_401,d_486
 
 2. Demographics in a json object. You can use this library to load them into python object:
-    {"black": 0, "hispanic": 0, "other": 0, "age": 69.90554414784394, "mideast": 0, "multi": 0, "gender": 0, "hawaiian": 0, "portuguese": 0, "american": 0, "asian": 0, "white": 1}
+
+> {"black": 0, "hispanic": 0, "other": 0, "age": 69.90554414784394, "mideast": 0, "multi": 0, "gender": 0, "hawaiian": 0, "portuguese": 0, "american": 0, "asian": 0, "white": 1}
 
 3. Previous admission events (which includes abnormal lab tests prefixed with "l\_", prescriptions prefixed with "p\_" and diagnosis with "d\_").
-    p\_ASA81 p\_CALCG2/100NS p\_CALCG2100NS p\_CALCG2100NS p\_HEPA5I l\_50970 l\_51265 p\_ACET325 p\_HYDR2 p\_VANC1F p\_VANCOBASE p\_HEPA10SYR p\_HEPA10SYR p\_METO25 l\_50862 l\_50954 p\_POTA20 l\_50924 l\_50953 l\_50998 d\_038 d\_285.9 d\_401 d\_486 d\_584 d\_995
+
+> p_ASA81 p_CALCG2/100NS p_CALCG2100NS p_CALCG2100NS p_HEPA5I l_50970 l_51265 p_ACET325 p_HYDR2 p_VANC1F p_VANCOBASE p_HEPA10SYR p_HEPA10SYR p_METO25 l_50862 l_50954 p_POTA20 l_50924 l_50953 l_50998 d_038 d_285.9 d_401 d_486 d_584 d_995
 
 4. The final admission which we used in our project as a hold out set. You would also notice that the diagnoses in part 1 also exists in this part:
-    p\_ASA325 p\_D545NS1000 p\_DEX50SY p\_DOCU100 p\_DOCU100L l\_51214 d\_401 d\_486
+> p_ASA325 p_D545NS1000 p_DEX50SY p_DOCU100 p_DOCU100L l_51214 d_401 d_486
 
 
 ### 2. Prediction
