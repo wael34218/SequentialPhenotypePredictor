@@ -70,7 +70,10 @@ Temporal tf-idf:
 
 Note that Ttfidf and Collaborative filtering approaches are computationally expensive and will require considerable amount of time to execute. All prediction methods execute 10-fold cross vaildation and outputs the following files:
 * A csv file containing various metrics (AUC, Accuracy, F-Score, Sensitivity, Specificity, TP, FP, TN, FN) for each diagnosis. This file is created in `Results/Stats` directory.
+
 * ROC plot stored in `Results/Plots`.
+
+![alt tag](https://github.com/wael34218/MimicVectorPredictor/blob/master/Results/Plots/ROC_SkipGram_ba=False_da=mimic_de=10.0_mo=org_pr=False_si=350_wi=23.png?raw=true)
 
 
 ## Libraries Used
