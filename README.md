@@ -81,7 +81,6 @@ Vector representations constructed by Word2Vec are able to capture semantic mean
 <p align="center">
     <img alt="Word Vectors" src="https://github.com/wael34218/MimicVectorPredictor/blob/master/Results/Analysis/word_vectors.png?raw=true" width="500">
 </p>
-![Word Vectors]()
 
 
 ## Libraries Used
