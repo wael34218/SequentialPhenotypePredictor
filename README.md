@@ -71,14 +71,17 @@ Temporal tf-idf:
 Note that Ttfidf and Collaborative filtering approaches are computationally expensive and will require considerable amount of time to execute. All prediction methods execute 10-fold cross vaildation and outputs the following files:
 * A csv file containing various metrics (AUC, Accuracy, F-Score, Sensitivity, Specificity, TP, FP, TN, FN) for each diagnosis. This file is created in `Results/Stats` directory.
 
-* ROC plot stored in `Results/Plots`:
-
-![ROC curve](https://github.com/wael34218/MimicVectorPredictor/blob/master/Results/Plots/ROC_SkipGram_ba=False_da=mimic_de=10.0_mo=org_pr=False_si=350_wi=23.png?raw=true){:width="400px"}
+<p align="center">
+    <img alt="ROC Curve" src="https://github.com/wael34218/MimicVectorPredictor/blob/master/Results/Plots/ROC_SkipGram_ba=False_da=mimic_de=10.0_mo=org_pr=False_si=350_wi=23.png?raw=true" width="500">
+</p>
 
 
 Vector representations constructed by Word2Vec are able to capture semantic meaning of medical concepts. Word2Vec clusters concepts based on their type as shown in the figure. In addition, it was able to capture closely similar concepts, for example the cosine similarity of ’p_WARF2’ (Warfarin 2mg Tab) and ’p_WARF1’ (Warfarin 1mg Tab) is 0.924. All prescriptions starting with ’p_WARF’  are close to each other around the point (0, 0.45). This representation simplifies learning since it does not treat similar concepts as different features.
 
-![Word Vectors](https://github.com/wael34218/MimicVectorPredictor/blob/master/Results/Analysis/word_vectors.png?raw=true){:width="400px"}
+<p align="center">
+    <img alt="Word Vectors" src="https://github.com/wael34218/MimicVectorPredictor/blob/master/Results/Analysis/word_vectors.png?raw=true" width="500">
+</p>
+![Word Vectors]()
 
 
 ## Libraries Used
