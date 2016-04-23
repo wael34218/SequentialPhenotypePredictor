@@ -1,6 +1,8 @@
 import numpy as np
-import seaborn
+import matplotlib
+matplotlib.use('tkagg')
 import matplotlib.pyplot as plt
+import seaborn
 
 N = 6
 
@@ -25,7 +27,7 @@ ax.set_xticks(ind + width + 0.125)
 ax.set_xticklabels(aggx)
 
 ax.legend((u_data[0], b_data[0], d_data), ('Original', 'Balanced', 'Dynamic Window'), loc=2)
-
+plt.ylabel('AUC', fontsize=14, color='black')
 # def autolabel(rects):
 #     # attach some text labels
 #     for rect in rects:

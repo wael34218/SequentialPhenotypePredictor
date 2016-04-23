@@ -2,7 +2,7 @@
 
 
 ## Introduction
-Medical concepts are inherently ambiguous, making them difficult for use in making prognoses. Our work focuses on building prediction models on top of semantic representation of concepts organized by Word2Vec. First, we transform Electronic Health Records (EHRs) into sequences of medical concepts, where each medical concept is analogous to a word in a sentence. Second, we feed the sequences into Word2Vec, which builds a vector representation for each concept. Finally, we generate various predictive models for early prognosis using this vector representation.
+Medical events are inherently ambiguous, making them difficult for use in making prognoses. Our work focuses on building prediction models on top of semantic representation of events organized by Word2Vec. First, we transform Electronic Health Records (EHRs) into sequences of medical events, where each medical event is analogous to a word in a sentence. Second, we feed the sequences into Word2Vec, which builds a vector representation for each event. Finally, we generate various predictive models for early prognosis using this vector representation.
 
 
 ## Installation
@@ -56,9 +56,9 @@ To run Patient Diagnosis Projection Similarity (PDPS) run the following commands
     cd ../../Prediction
     python pdps.py --dataset mimic --window 30 --size 350 --decay 8
 
-Patient Diagnosis Concept Similarity:
+Patient Diagnosis Event Similarity:
 
-    python pdcs.py --dataset mimic --window 30 --size 350 --decay 8
+    python pdes.py --dataset mimic --window 30 --size 350 --decay 8
 
 Collaborative Filtering:
 
@@ -76,7 +76,7 @@ Note that Ttfidf and Collaborative filtering approaches are computationally expe
 </p>
 
 
-Vector representations constructed by Word2Vec are able to capture semantic meaning of medical concepts. Word2Vec clusters concepts based on their type as shown in the figure. In addition, it was able to capture closely similar concepts, for example the cosine similarity of ’p_WARF2’ (Warfarin 2mg Tab) and ’p_WARF1’ (Warfarin 1mg Tab) is 0.924. All prescriptions starting with ’p_WARF’  are close to each other around the point (0, 0.45). This representation simplifies learning since it does not treat similar concepts as different features.
+Vector representations constructed by Word2Vec are able to capture semantic meaning of medical events. Word2Vec clusters events based on their type as shown in the figure. In addition, it was able to capture closely similar events, for example the cosine similarity of ’p_WARF2’ (Warfarin 2mg Tab) and ’p_WARF1’ (Warfarin 1mg Tab) is 0.924. All prescriptions starting with ’p_WARF’  are close to each other around the point (0, 0.45). This representation simplifies learning since it does not treat similar events as different features.
 
 <p align="center">
     <img alt="Word Vectors" src="https://github.com/wael34218/MimicVectorPredictor/blob/master/Results/Analysis/word_vectors.png?raw=true" width="500">
