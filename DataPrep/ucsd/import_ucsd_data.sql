@@ -33,4 +33,4 @@ CREATE TABLE deMed
 \copy deMed FROM '../../Data/ucsd_raw/deMed.csv' WITH (FORMAT CSV, DELIMITER '|', Null 'NULL', quote E'\b', HEADER)
 
 ALTER TABLE deLab ADD newid varchar;
-UPDATE deLab SET newid = component_id || '-' || result_flag;
+UPDATE deLab SET newid = component_id || '-' || replace(result_flag, ' ', '');
