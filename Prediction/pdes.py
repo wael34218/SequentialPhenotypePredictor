@@ -3,7 +3,7 @@ import math
 from binarypredictor import BinaryPredictor
 
 
-class CbowSim(BinaryPredictor):
+class PDES(BinaryPredictor):
 
     def __init__(self, filename, window=10, size=600, decay=5, balanced=False, prior=True,
                  dataset="ucsd", model="org"):
@@ -15,7 +15,7 @@ class CbowSim(BinaryPredictor):
         self._dataset = dataset
         self._props = {"window": window, "size": size, "decay": decay, "prior": prior,
                        "balanced": balanced, "dataset": dataset, "model": model}
-        super(CbowSim, self).__init__(filename)
+        super(PDES, self).__init__(filename)
 
     def train(self, filename):
         print("Train", filename)
@@ -80,8 +80,7 @@ if __name__ == '__main__':
 
     prior = False if args.prior == 0 else True
     bal = False if args.balanced == 0 else True
-    model = CbowSim(data_path + 'vocab', args.window, args.size, args.decay, bal, prior, ds,
-                    args.model)
+    model = PDES(data_path+'vocab', args.window, args.size, args.decay, bal, prior, ds, args.model)
 
     train_files = []
     valid_files = []

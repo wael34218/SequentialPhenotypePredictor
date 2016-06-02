@@ -7,3 +7,4 @@ nltk
 pandas
 matplotlib
 seaborn
+psycopg2

@@ -5,7 +5,7 @@ from binarypredictor import BinaryPredictor
 import sys
 
 
-class SkipGram(BinaryPredictor):
+class PDPS(BinaryPredictor):
     def __init__(self, filename, window=10, size=600, decay=5, balanced=False, prior=True,
                  dataset="ucsd", model="org"):
         self._window = window
@@ -16,7 +16,7 @@ class SkipGram(BinaryPredictor):
         self._dataset = dataset
         self._props = {"window": window, "size": size, "decay": decay, "prior": prior,
                        "balanced": balanced, "dataset": dataset, "model": model}
-        super(SkipGram, self).__init__(filename)
+        super(PDPS, self).__init__(filename)
 
     def train(self, filename):
         print(filename)
@@ -33,7 +33,6 @@ class SkipGram(BinaryPredictor):
 
     def word_vector_graph(self, filename):
         from matplotlib import pyplot as plt
-        # import seaborn
         self.counts = defaultdict(lambda: 0)
         with open(filename) as f:
             for s in f:
@@ -64,8 +63,9 @@ class SkipGram(BinaryPredictor):
         c = ax.bar(0, [0], 0, color='orange')
         s = ax.bar(0, [0], 0, color='green')
         l = ax.bar(0, [0], 0, color='red')
+        plt.tick_params(axis='both', which='major', labelsize=16)
         ax.legend((d[0], p[0], l[0], c[0], s[0]), ('Diagnosis', 'Prescription', 'Lab test',
-                                                   'Condition', 'Symptom'), loc=4)
+                                                   'Condition', 'Symptom'), loc=1, fontsize=22)
         plt.savefig('../Results/Plots/event_'+self._props["dataset"]+'_colored.png')
         sys.exit(0)
 
@@ -97,7 +97,7 @@ if __name__ == '__main__':
 
     prior = False if args.prior == 0 else True
     bal = False if args.balanced == 0 else True
-    model = SkipGram(data_path + 'vocab', args.window, args.size, args.decay, bal, prior, ds,
+    model = PDPS(data_path + 'vocab', args.window, args.size, args.decay, bal, prior, ds,
                      args.model)
 
     train_files = []

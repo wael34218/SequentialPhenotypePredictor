@@ -279,10 +279,9 @@ class BinaryPredictor(object):
         plt.plot([0, 1], [0, 1], 'k--')
         plt.xlim([0.0, 1.0])
         plt.ylim([0.0, 1.0])
-        plt.xlabel('False Positive Rate')
-        plt.ylabel('True Positive Rate')
-        plt.title('Receiver operating characteristic example')
-        plt.legend(loc="lower right", fontsize=12)
+        plt.xlabel('False Positive Rate', fontsize=16)
+        plt.ylabel('True Positive Rate', fontsize=16)
+        plt.legend(loc="lower right", fontsize=16)
         plt.savefig('../Results/Plots/ROC_' + self.name + '.png')
 
     def _report_accuracy(self):
