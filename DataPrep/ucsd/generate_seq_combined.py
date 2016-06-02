@@ -63,7 +63,7 @@ def set_p_features(pat_id):
     r = subject_info[0][2]
     if "Caucasian" in r:
         feats["white"] = 1
-    elif "Hispanic/Latino" or "Hispanic" in r:
+    elif "Hispanic/Latino" in r or "Hispanic" in r:
         feats["hispanic"] = 1
     elif "African American" in r:
         feats["black"] = 1
