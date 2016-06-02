@@ -68,6 +68,11 @@ Temporal tf-idf:
 
     python ttfidf.py --dataset mimic --ngrams 2 --skip 10 --decay 8 --prior 1
 
+To check the parameters for each model run:
+
+    python METHOD_NAME.py --help
+
+
 Note that Ttfidf and Collaborative filtering approaches are computationally expensive and will require considerable amount of time to execute. All prediction methods execute 10-fold cross vaildation and outputs the following files:
 * A csv file containing various metrics (AUC, Accuracy, F-Score, Sensitivity, Specificity, TP, FP, TN, FN) for each diagnosis. This file is created in `Results/Stats` directory.
 
