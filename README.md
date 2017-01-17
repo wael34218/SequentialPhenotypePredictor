@@ -53,3 +53,8 @@ This project depends on:
 2. ICD9 - https://github.com/sirrice/icd9
 3. ICD9 - https://github.com/kshedden/icd9
 4. gensim - http://radimrehurek.com/gensim/
+
+
+## Paper
+
+Farhan, Wael, et al. "A Predictive Model for Medical Events Based on Contextual Embedding of Temporal Sequences." JMIR Medical Informatics 4.4 (2016). - http://medinform.jmir.org/2016/4/e39/
