@@ -47,9 +47,9 @@ class Ensemble(BinaryPredictor):
                         self._weights["cbowsim"][diag] += cbow_preds[diag]
                         self._weights["skipgram"][diag] += skip_preds[diag]
                     else:
-                        self._weights["collaborative"][diag] += 1 - cf_preds[self.dd[diag]][diag]
-                        self._weights["cbowsim"][diag] += 1 - cbow_preds[self.dd[diag]][diag]
-                        self._weights["skipgram"][diag] += 1 - skip_preds[self.dd[diag]][diag]
+                        self._weights["collaborative"][diag] += 1 - cf_preds[diag]
+                        self._weights["cbowsim"][diag] += 1 - cbow_preds[diag]
+                        self._weights["skipgram"][diag] += 1 - skip_preds[diag]
 
             # Normalize weights
             for diag in self._diags:

@@ -3,19 +3,22 @@ import math
 from binarypredictor import BinaryPredictor
 
 
-class CbowSim(BinaryPredictor):
+class PDES(BinaryPredictor):
 
-    def __init__(self, filename, window=10, size=600, decay=5, balanced=False, prior=True):
+    def __init__(self, filename, window=10, size=600, decay=5, balanced=False, prior=True,
+                 dataset="ucsd", model="org"):
         self._window = window
         self._size = size
         self._decay = decay
         self._prior_pred = prior
         self._stopwordslist = []
+        self._dataset = dataset
         self._props = {"window": window, "size": size, "decay": decay, "prior": prior,
-                       "balanced": balanced}
-        super(CbowSim, self).__init__(filename)
+                       "balanced": balanced, "dataset": dataset, "model": model}
+        super(PDES, self).__init__(filename)
 
     def train(self, filename):
+        print("Train", filename)
         self.base_train(filename)
 
         self._sim_mat = {}
@@ -57,26 +60,35 @@ if __name__ == '__main__':
                         help='Set size of word vectors (default: 600)')
     parser.add_argument('-d', '--decay', action="store", default=5, type=float,
                         help='Set exponential decay through time (default: 5)')
-    parser.add_argument('-p', '--prior', action="store", default=1, type=int,
-                        help='Add prior probability (0 for False, 1 for True) default 1')
+    parser.add_argument('-p', '--prior', action="store", default=0, type=int,
+                        help='Add prior probability (0 for False, 1 for True) default 0')
     parser.add_argument('-b', '--balanced', action="store", default=0, type=int,
                         help='Whether to use balanced or not blanaced datasets (0 or 1) default 0')
+    parser.add_argument('-ds', '--dataset', action="store", default="ucsd", type=str,
+                        help='Which dataset to use "ucsd" or "mimic", default "ucsd"')
+    parser.add_argument('-m', '--model', action="store", default="org", type=str,
+                        help='Which model to use "org" or "chao", default "org"')
     args = parser.parse_args()
 
-    train_files = []
-    test_files = []
-    data_path = "../Data/seq_combined/"
+    ds = "ucsd"
+    if args.dataset == "mimic":
+        ds = "mimic"
+
+    data_path = "../Data/" + ds + "_seq/"
     if args.balanced:
-        data_path = "../Data/seq_combined_balanced/"
+        data_path = "../Data/" + ds + "_balanced/"
 
     prior = False if args.prior == 0 else True
     bal = False if args.balanced == 0 else True
-    model = CbowSim(data_path + 'mimic_train_0', args.window, args.size, args.decay, bal, prior)
+    model = PDES(data_path+'vocab', args.window, args.size, args.decay, bal, prior, ds, args.model)
 
+    train_files = []
+    valid_files = []
     for i in range(10):
-        train_files.append(data_path + 'mimic_train_'+str(i))
-        test_files.append(data_path + 'mimic_test_'+str(i))
+        train_files.append(data_path + 'trainv_'+str(i))
+        valid_files.append(data_path + 'test_'+str(i))
 
-    model.cross_validate(train_files, test_files)
+    model.cross_validate(train_files, valid_files)
     model.write_stats()
     print(model.accuracy)
+    model.plot_roc()

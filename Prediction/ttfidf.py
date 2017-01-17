@@ -8,18 +8,18 @@ import itertools
 
 class TFIDF(BinaryPredictor):
 
-    def __init__(self, filename, ngrams=3, skip=3, decay=0, balanced=False, prior=True):
+    def __init__(self, filename, ngrams=3, skip=3, decay=0, balanced=False, prior=True,
+                 dataset="ucsd"):
         self._ngrams = ngrams
         self._skip = skip
         self._decay = decay
         self._prior_pred = prior
-        self._balanced = balanced
-        # Stopwords are not actually calculated - added to comply with the same interface as other
-        # predictors
         self._stopwordslist = []
+        self._dataset = dataset
         self._cutoff = 2 * (skip + ngrams)
         self._props = {"ngrams": ngrams, "decay": decay, "skip": skip, "prior": prior,
-                       "balanced": balanced, "cutoff": self._cutoff}
+                       "balanced": balanced, "cutoff": self._cutoff, "dataset": dataset}
+
         super(TFIDF, self).__init__(filename)
 
     def _generate_grams(self, sequence):
@@ -34,7 +34,10 @@ class TFIDF(BinaryPredictor):
                 for skip_tail in itertools.combinations(tail, self._ngrams - 1):
                     if skip_tail[-1] is None:
                         continue
-                    termc[head + skip_tail] += 1 * math.exp(-1.0 * self._decay * i / total)
+
+                    j = total - i + 1
+                    termc[head + skip_tail] += 1 * math.exp(-1.0 * self._decay * (total / j))
+                    # termc[head + skip_tail] += 1 * math.exp(-1.0 * self._decay *  total / i)
             return [("".join(t), termc[t]) for t in termc]
         else:
             total = len(sequence)
@@ -123,27 +126,33 @@ if __name__ == '__main__':
                         help='Skipgram (default: 3)')
     parser.add_argument('-d', '--decay', action="store", default=0.0, type=float,
                         help='decay (default: 0.0)')
-    parser.add_argument('-p', '--prior', action="store", default=1, type=int,
-                        help='Add prior probability (0 for False, 1 for True) default 1')
+    parser.add_argument('-p', '--prior', action="store", default=0, type=int,
+                        help='Add prior probability (0 for False, 1 for True) default 0')
     parser.add_argument('-b', '--balanced', action="store", default=0, type=int,
                         help='Whether to use balanced or not blanaced datasets (0 or 1) default 0')
+    parser.add_argument('-ds', '--dataset', action="store", default="ucsd", type=str,
+                        help='Which dataset to use "ucsd" or "mimic", default "ucsd"')
     args = parser.parse_args()
 
-    train_files = []
-    test_files = []
+    ds = "ucsd"
+    if args.dataset == "mimic":
+        ds = "mimic"
 
-    data_path = "../Data/seq_combined/"
+    data_path = "../Data/" + ds + "_seq/"
     if args.balanced:
-        data_path = "../Data/seq_combined_balanced/"
+        data_path = "../Data/" + ds + "_balanced/"
 
     prior = False if args.prior == 0 else True
     bal = False if args.balanced == 0 else True
-    model = TFIDF(data_path + 'mimic_train_0', args.ngrams, args.skip, args.decay, bal, prior)
+    model = TFIDF(data_path + 'vocab', args.ngrams, args.skip, args.decay, bal, prior, ds)
 
+    train_files = []
+    valid_files = []
     for i in range(10):
-        train_files.append(data_path + 'mimic_train_'+str(i))
-        test_files.append(data_path + 'mimic_test_'+str(i))
+        train_files.append(data_path + 'trainv_'+str(i))
+        valid_files.append(data_path + 'test_'+str(i))
 
-    model.cross_validate(train_files, test_files)
+    model.cross_validate(train_files, valid_files)
     model.write_stats()
     print(model.accuracy)
+    model.plot_roc()
